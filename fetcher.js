@@ -206,7 +206,7 @@ function buildBoardHTML(id, logo, name, badge, color, items) {
         <div class="item-body">
           <a class="item-title" href="${safeUrl}" target="_blank" rel="noopener">${safeTitle}</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:#b0b0b0"></div></div>
             <span class="hot-num">${formatHot(hot)}</span>
           </div>
         </div>
