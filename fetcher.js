@@ -335,7 +335,7 @@ async function fetchAndGenerate() {
   // ─── 看板配置（badge 颜色与 logo 品牌色一致） ──────
   const boards = [
     // 第一行
-    { id: 'autohome-hot', logo: 'https://www.autohome.com.cn/favicon.ico',       name: '汽车之家', badge: '热榜',     color: '#FF6600', items: autohomeHot },
+    { id: 'autohome-hot', logo: 'https://www.autohome.com.cn/favicon.ico',       name: '汽车之家', badge: '热榜',     color: '#2B6BE6', items: autohomeHot },
     { id: 'dcd-hot',      logo: 'https://icon.horse/icon/www.dongchedi.com',       name: '懂车帝',   badge: '热点榜',   color: '#F5C518', items: dcdHot },
     { id: 'wb-auto',      logo: 'https://weibo.com/favicon.ico',                  name: '新浪微博', badge: '汽车热榜', color: '#E6162D', items: wbAuto },
     { id: 'tt-hot',       logo: 'https://www.toutiao.com/favicon.ico',             name: '今日头条', badge: '头条热榜', color: '#F85959', items: ttHot },
