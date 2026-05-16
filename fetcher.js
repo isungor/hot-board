@@ -304,8 +304,8 @@ async function fetchAndGenerate() {
   // ─── 数据处理 ─────────────────────────────────────
 
   // 汽车之家 & 懂车帝（直接用懂车帝数据）
-  const autohomeHot = normalizeDcd(dcd, 10);
-  const dcdHot = normalizeDcd(dcd, 10);
+  const autohomeHot = normalizeDcd(dcd, 15);
+  const dcdHot = normalizeDcd(dcd, 15);
 
   // 微博汽车热榜：多源三级补充（微博 → IT资讯 → 百度 → 头条）
   const autoSources = [
@@ -314,7 +314,7 @@ async function fetchAndGenerate() {
     { data: baidu, normalize: normalizeBaidu },
     { data: toutiao, normalize: normalizeToutiao },
   ];
-  const wbAuto = multiSourceFilter(autoSources, WEIBO_AUTO_KW, AUTO_KW_BROAD, 10);
+  const wbAuto = multiSourceFilter(autoSources, WEIBO_AUTO_KW, AUTO_KW_BROAD, 15);
   console.log(`  微博汽车热榜: ${wbAuto.length} 条`);
 
   // 微博科技热搜：多源三级补充（微博 → IT资讯 → 百度 → 头条）
@@ -336,8 +336,8 @@ async function fetchAndGenerate() {
   const boards = [
     // 第一行
     { id: 'autohome-hot', logo: 'https://www.autohome.com.cn/favicon.ico',       name: '汽车之家', badge: '热榜',     color: '#2B6BE6', items: autohomeHot },
-    { id: 'dcd-hot',      logo: 'https://icon.horse/icon/www.dongchedi.com',       name: '懂车帝',   badge: '热点榜',   color: '#F5C518', items: dcdHot },
-    { id: 'wb-auto',      logo: 'https://weibo.com/favicon.ico',                  name: '新浪微博', badge: '汽车热榜', color: '#E6162D', items: wbAuto },
+    { id: 'dcd-hot',      logo: 'https://icon.horse/icon/www.dongchedi.com',       name: '懂车帝',   badge: '热榜',   color: '#F5C518', items: dcdHot },
+    { id: 'wb-auto',      logo: 'https://weibo.com/favicon.ico',                  name: '新浪微博', badge: '汽车热搜', color: '#E6162D', items: wbAuto },
     { id: 'tt-hot',       logo: 'https://www.toutiao.com/favicon.ico',             name: '今日头条', badge: '头条热榜', color: '#F85959', items: ttHot },
     // 第二行
     { id: 'dy-hot',       logo: 'https://www.douyin.com/favicon.ico',              name: '抖音',     badge: '热榜',     color: '#FE2C55', items: dyHot },
