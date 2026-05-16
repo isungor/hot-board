@@ -9,33 +9,65 @@ const API_BASE = 'https://60s.viki.moe/v2';
 const TIMEOUT = 15000;
 
 // ─── 关键词配置 ────────────────────────────────────
+
+// 汽车热榜 - 精准关键词（用于微博 + it-news 匹配）
 const WEIBO_AUTO_KW = [
+  // 汽车品牌
   '比亚迪','特斯拉','丰田','本田','宝马','奔驰','奥迪','蔚来','理想','小鹏',
   '吉利','长安汽车','大众汽车','大众ID','福特','保时捷','东风日产','问界','智界','享界',
   '极氪','零跑','岚图','深蓝','哪吒','红旗','领克','奇瑞','名爵','阿维塔',
   '高合','乐道','方程豹','捷途','宝骏','启源','星途','智己','飞凡',
   '鸿蒙智行','小米汽车','小米SU7','小米SU','华为智驾','华为鸿蒙','华为汽车',
+  // 汽车品类/技术
   '新能源车','新能源汽车','混动车型','纯电车型','插混','增程式','充电桩','动力电池',
   '智能驾驶','智能座舱','辅助驾驶','车机系统','智驾',
   '油耗','车祸','追尾','试驾','提车','交车','购车','买车',
   '燃油车','电动车','电车','越野车','摩托车','赛车',
   '车企','造车','新势力','网约车','车险','驾考',
 ];
-const ENT_KW = ['文娱','影视','综艺','明星','音乐','电影','电视剧','演出','娱乐','浪姐','歌手','乘风','芒果','选秀','演唱会','票房','热巴','杨幂','刘诗诗','张柏芝','白鹿','迪丽热巴','王力宏','名侦探柯南','何猷君','奚梦瑶','方媛','李纯','徐志胜','张嘉益','痞幼','沈腾','孙颖莎','柳智敏','Faker','李乃文','梅婷','黄圣依','金鹰奖'];
+
+// 汽车热榜 - 扩展关键词（用于百度热搜补充，覆盖面更广）
+const AUTO_KW_BROAD = [
+  ...WEIBO_AUTO_KW,
+  '汽车','买车','卖车','降价','补贴','驾校','考驾照',
+  'SUV','MPV','轿车','燃油','发动机','变速箱',
+  '4S店','二手车','车市','交规','驾照','超速','酒驾',
+  '高速','国道','省道','公路','加油','油站',
+];
+
+// 科技热搜 - 精准关键词
 const TECH_KW = [
+  // AI / 大模型
   '英伟达','NVIDIA','OpenAI','ChatGPT','GPT','大模型','算力','人工智能','AI大模型',
   'Sora','Claude','Gemini','豆包','文心一言','通义千问','Kimi','讯飞','DeepSeek',
+  // 芯片 / 半导体
   '芯片','半导体','台积电','高通','联发科','英特尔','Intel','AMD','光刻机','芯片制造','存储芯片','显卡',
+  // 科技巨头 & 平台
   '苹果公司','iPhone','iOS','iPad','MacBook','Apple Vision',
   '安卓','Android','华为','腾讯','微信','阿里巴巴','阿里云','百度','字节跳动',
   '京东','美团','拼多多','网易','快手','抖音','TikTok','小红书','B站',
   '小米','OPPO','vivo','荣耀','三星','索尼','Meta','谷歌','微软',
+  // 前沿科技
   '比特币','加密货币','区块链','元宇宙','云计算','物联网',
   '量子计算','机器人','人形机器人','VR眼镜','AR眼镜','空间计算',
+  // 通信 / 安全
   '5G','6G','电信','联通','宽带','光纤','网络安全','数据泄露','黑客','漏洞',
+  // 科技人物
   '马斯克','库克','黄仁勋','扎克伯格','奥特曼',
+  // 消费电子
   '苹果手机','智能手机','折叠屏','卫星通信','开源','开发者',
 ];
+
+// 科技热搜 - 扩展关键词（用于 it-news + 百度补充）
+const TECH_KW_BROAD = [
+  ...TECH_KW,
+  'AI','科技','互联网','数码','编程','代码','技术','科技股',
+  '电商','手机','电脑','笔记本','平板','操作系统','无人机','自动驾驶',
+  'APP','软件','硬件','处理器','内存','闪存','电池',
+];
+
+// 文娱关键词
+const ENT_KW = ['文娱','影视','综艺','明星','音乐','电影','电视剧','演出','娱乐','浪姐','歌手','乘风','芒果','选秀','演唱会','票房','热巴','杨幂','刘诗诗','张柏芝','白鹿','迪丽热巴','王力宏','名侦探柯南','何猷君','奚梦瑶','方媛','李纯','徐志胜','张嘉益','痞幼','沈腾','孙颖莎','柳智敏','Faker','李乃文','梅婷','黄圣依','金鹰奖'];
 
 // ─── 时间工具 ──────────────────────────────────────
 function nowBJ() { return new Date(Date.now() + 8 * 3600 * 1000); }
@@ -93,6 +125,12 @@ function normalizeItNews(items, limit = 20) {
     hot: '', hot_num: 0, label: '',
   }));
 }
+function normalizeBaidu(items, limit = 20) {
+  return items.slice(0, limit).map((d, i) => ({
+    rank: d.rank || i + 1, title: d.title || '', url: d.url || d.link || '',
+    hot: d.score_desc || String(d.score || ''), hot_num: parseInt(d.score) || 0,
+  }));
+}
 
 function filterByKw(items, keywords, normalizer, limit = 10) {
   const result = [];
@@ -104,6 +142,42 @@ function filterByKw(items, keywords, normalizer, limit = 10) {
     if (result.length >= limit) break;
   }
   return normalizer(result, limit);
+}
+
+// 多源三级补充：每个数据源自带归一化函数
+// sources: [{ data, normalize }] 格式
+function multiSourceFilter(sources, keywords, broadKeywords, limit = 10) {
+  let result = [];
+  const existTitles = new Set();
+
+  // 第一级：精准关键词匹配
+  for (const src of sources) {
+    if (result.length >= limit) break;
+    const matched = filterByKw(src.data, keywords, src.normalize, limit);
+    for (const item of matched) {
+      if (!existTitles.has(item.title) && result.length < limit) {
+        result.push(item);
+        existTitles.add(item.title);
+      }
+    }
+  }
+
+  // 第二级：扩展关键词补充（如果还不够）
+  if (result.length < limit && broadKeywords) {
+    for (const src of sources) {
+      if (result.length >= limit) break;
+      const matched = filterByKw(src.data, broadKeywords, src.normalize, limit);
+      for (const item of matched) {
+        if (!existTitles.has(item.title) && result.length < limit) {
+          result.push(item);
+          existTitles.add(item.title);
+        }
+      }
+    }
+  }
+
+  // 重编号
+  return result.slice(0, limit).map((item, i) => ({ ...item, rank: i + 1 }));
 }
 
 // ─── 格式化 ────────────────────────────────────────
@@ -132,7 +206,7 @@ function buildBoardHTML(id, logo, name, badge, color, items) {
         <div class="item-body">
           <a class="item-title" href="${safeUrl}" target="_blank" rel="noopener">${safeTitle}</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:#555"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
             <span class="hot-num">${formatHot(hot)}</span>
           </div>
         </div>
@@ -159,7 +233,7 @@ function generateHTML(boards) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>全网热榜看板</title>
+<title>【YU-全网热榜信息看板】</title>
 <style>
 :root{--bg:#f0f2f5;--card:#fff;--text:#1a1a2e;--text2:#6b7280;--border:#e5e7eb;--shadow:0 2px 8px rgba(0,0,0,.06);--radius:12px}
 @media(prefers-color-scheme:dark){:root{--bg:#0a0a0f;--card:#16161d;--text:#e8e8ed;--text2:#6e6e78;--border:#2a2a35;--shadow:0 2px 8px rgba(0,0,0,.3)}}
@@ -200,11 +274,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
 </style>
 </head>
 <body>
-<div class="header"><h1>全网热榜看板</h1><div class="sub">每 30 分钟自动更新 <span>${updateTime}</span></div></div>
+<div class="header"><h1>【YU-全网热榜信息看板】</h1><div class="sub">每日 10:30 / 15:00 更新 <span>${updateTime}</span></div></div>
 <div class="boards">
 ${boardsHTML}
 </div>
-<div class="footer">数据来源: <a href="https://60s.viki.moe" target="_blank">60s API</a> · 部署于 <a href="https://zeabur.com" target="_blank">Zeabur</a></div>
+<div class="footer">数据来源: <a href="https://60s.viki.moe" target="_blank">60s API</a> · 部署于 <a href="https://pages.github.com" target="_blank">GitHub Pages</a></div>
 <div class="back-top" id="backTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">&uarr;</div>
 <script>window.addEventListener('scroll',function(){document.getElementById('backTop').classList.toggle('show',window.scrollY>400)});</script>
 </body>
@@ -215,47 +289,61 @@ ${boardsHTML}
 async function fetchAndGenerate() {
   console.log(`[${formatBJ(nowBJ())}] 开始抓取数据...`);
 
-  // 并发请求所有 API
-  const [dcd, toutiao, douyin, weibo, itnews] = await Promise.allSettled([
+  // 并发请求所有 API（6个数据源）
+  const [dcd, toutiao, douyin, weibo, itnews, baidu] = await Promise.allSettled([
     fetchJSON(`${API_BASE}/dongchedi`),
     fetchJSON(`${API_BASE}/toutiao`),
     fetchJSON(`${API_BASE}/douyin`),
     fetchJSON(`${API_BASE}/weibo`),
     fetchJSON(`${API_BASE}/it-news`),
+    fetchJSON(`${API_BASE}/baidu/hot`),
   ]).then(results => results.map(r => r.status === 'fulfilled' ? r.value : []));
 
-  console.log(`  懂车帝: ${dcd.length} | 头条: ${toutiao.length} | 抖音: ${douyin.length} | 微博: ${weibo.length} | IT资讯: ${itnews.length}`);
+  console.log(`  懂车帝: ${dcd.length} | 头条: ${toutiao.length} | 抖音: ${douyin.length} | 微博: ${weibo.length} | IT资讯: ${itnews.length} | 百度: ${baidu.length}`);
 
-  // 数据处理
+  // ─── 数据处理 ─────────────────────────────────────
+
+  // 汽车之家 & 懂车帝（直接用懂车帝数据）
   const autohomeHot = normalizeDcd(dcd, 10);
   const dcdHot = normalizeDcd(dcd, 10);
 
-  // 微博汽车热榜：微博匹配 + IT资讯补充
-  const wbAutoFromWeibo = filterByKw(weibo, WEIBO_AUTO_KW, normalizeWeibo, 10);
-  let wbAuto = wbAutoFromWeibo;
-  if (wbAuto.length < 10 && itnews.length > 0) {
-    const existTitles = new Set(wbAuto.map(i => i.title));
-    const itAuto = filterByKw(itnews, WEIBO_AUTO_KW, normalizeItNews, 10)
-      .filter(i => !existTitles.has(i.title));
-    wbAuto = [...wbAuto, ...itAuto].slice(0, 10);
-    wbAuto = wbAuto.map((item, i) => ({ ...item, rank: i + 1 }));
-  }
+  // 微博汽车热榜：多源三级补充（微博 → IT资讯 → 百度 → 头条）
+  const autoSources = [
+    { data: weibo, normalize: normalizeWeibo },
+    { data: itnews, normalize: normalizeItNews },
+    { data: baidu, normalize: normalizeBaidu },
+    { data: toutiao, normalize: normalizeToutiao },
+  ];
+  const wbAuto = multiSourceFilter(autoSources, WEIBO_AUTO_KW, AUTO_KW_BROAD, 10);
+  console.log(`  微博汽车热榜: ${wbAuto.length} 条`);
+
+  // 微博科技热搜：多源三级补充（微博 → IT资讯 → 百度 → 头条）
+  const techSources = [
+    { data: weibo, normalize: normalizeWeibo },
+    { data: itnews, normalize: normalizeItNews },
+    { data: baidu, normalize: normalizeBaidu },
+    { data: toutiao, normalize: normalizeToutiao },
+  ];
+  const wbTech = multiSourceFilter(techSources, TECH_KW, TECH_KW_BROAD, 10);
+  console.log(`  微博科技热搜: ${wbTech.length} 条`);
 
   const ttHot = normalizeToutiao(toutiao, 20);
   const dyHot = normalizeDouyin(douyin, 20);
   const wbHot = normalizeWeibo(weibo, 20);
   const wbEnt = filterByKw(weibo, ENT_KW, normalizeWeibo, 10);
-  const wbTech = filterByKw(weibo, TECH_KW, normalizeWeibo, 10);
 
+  // ─── 看板配置（badge 颜色与 logo 品牌色一致） ──────
   const boards = [
-    { id: 'autohome-hot', logo: 'https://www.autohome.com.cn/favicon.ico', name: '汽车之家', badge: '热榜',     color: '#e84a4a', items: autohomeHot },
-    { id: 'dcd-hot',      logo: 'https://icon.horse/icon/www.dongchedi.com', name: '懂车帝',   badge: '热点榜',   color: '#00b894', items: dcdHot },
-    { id: 'wb-auto',      logo: 'https://weibo.com/favicon.ico',           name: '新浪微博', badge: '汽车热榜', color: '#e17055', items: wbAuto },
-    { id: 'tt-hot',       logo: 'https://www.toutiao.com/favicon.ico',     name: '今日头条', badge: '头条热榜', color: '#ff4757', items: ttHot },
-    { id: 'dy-hot',       logo: 'https://www.douyin.com/favicon.ico',      name: '抖音',     badge: '热榜',     color: '#1a1a2e', items: dyHot },
-    { id: 'wb-hot',       logo: 'https://weibo.com/favicon.ico',           name: '新浪微博', badge: '热搜榜',   color: '#ff4500', items: wbHot },
-    { id: 'wb-ent',       logo: 'https://weibo.com/favicon.ico',           name: '新浪微博', badge: '文娱热搜', color: '#e84393', items: wbEnt },
-    { id: 'wb-tech',      logo: 'https://weibo.com/favicon.ico',           name: '新浪微博', badge: '科技热搜', color: '#6c5ce7', items: wbTech },
+    // 第一行
+    { id: 'autohome-hot', logo: 'https://www.autohome.com.cn/favicon.ico',       name: '汽车之家', badge: '热榜',     color: '#FF6600', items: autohomeHot },
+    { id: 'dcd-hot',      logo: 'https://icon.horse/icon/www.dongchedi.com',       name: '懂车帝',   badge: '热点榜',   color: '#1BC88A', items: dcdHot },
+    { id: 'wb-auto',      logo: 'https://weibo.com/favicon.ico',                  name: '新浪微博', badge: '汽车热榜', color: '#E6162D', items: wbAuto },
+    { id: 'tt-hot',       logo: 'https://www.toutiao.com/favicon.ico',             name: '今日头条', badge: '头条热榜', color: '#F85959', items: ttHot },
+    // 第二行
+    { id: 'dy-hot',       logo: 'https://www.douyin.com/favicon.ico',              name: '抖音',     badge: '热榜',     color: '#FE2C55', items: dyHot },
+    { id: 'wb-hot',       logo: 'https://weibo.com/favicon.ico',                   name: '新浪微博', badge: '热搜榜',   color: '#E6162D', items: wbHot },
+    { id: 'wb-ent',       logo: 'https://weibo.com/favicon.ico',                   name: '新浪微博', badge: '文娱热搜', color: '#E6162D', items: wbEnt },
+    { id: 'wb-tech',      logo: 'https://weibo.com/favicon.ico',                   name: '新浪微博', badge: '科技热搜', color: '#E6162D', items: wbTech },
   ];
 
   const html = generateHTML(boards);
