@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YU-全网热点看板</title>
+<title>【YU-全网热榜信息看板】</title>
 <style>
 :root{--bg:#f0f2f5;--card:#fff;--text:#1a1a2e;--text2:#6b7280;--border:#e5e7eb;--shadow:0 2px 8px rgba(0,0,0,.06);--radius:12px}
 @media(prefers-color-scheme:dark){:root{--bg:#0a0a0f;--card:#16161d;--text:#e8e8ed;--text2:#6e6e78;--border:#2a2a35;--shadow:0 2px 8px rgba(0,0,0,.3)}}
@@ -13,11 +13,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
 .header h1{font-size:24px;font-weight:800;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-.5px}
 .header .sub{font-size:13px;color:var(--text2);margin-top:6px}
 .header .sub span{display:inline-block;background:rgba(102,126,234,.1);color:#667eea;padding:2px 10px;border-radius:20px;font-weight:600;font-size:12px;margin-left:6px}
-.refresh-btn{display:inline-flex;align-items:center;gap:4px;background:rgba(102,126,234,.1);color:#667eea;border:1px solid rgba(102,126,234,.15);padding:2px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;margin-left:6px;font-family:inherit}
-.refresh-btn:hover{background:rgba(102,126,234,.2);border-color:rgba(102,126,234,.3)}
-.refresh-btn.loading{opacity:.6;pointer-events:none}
-@keyframes spin-anim{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-.refresh-btn.loading .spin-icon{animation:spin-anim 1s linear infinite;display:inline-block}
 .boards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;max-width:1400px;margin:16px auto;padding:0 16px 24px}
 .board{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
 .board-head{display:flex;align-items:center;gap:8px;padding:12px 14px 10px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--card);z-index:10}
@@ -49,122 +44,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
 </style>
 </head>
 <body>
-<div class="header"><h1>YU-全网热点看板</h1><div class="sub"><span id="clock">2026-05-18 19:08</span><button class="refresh-btn" id="refreshBtn" onclick="refreshAll()"><span class="spin-icon">⟳</span> 刷新</button></div></div>
+<div class="header"><h1>【YU-全网热榜信息看板】</h1><div class="sub">每日 10:30 / 15:00 更新 <span>2026-05-18 19:09</span></div></div>
 <div class="boards">
   <div class="board" id="autohome-hot">
     <div class="board-head">
       <img class="logo" src="https://www.autohome.com.cn/favicon.ico" alt="汽车之家" onerror="this.style.display='none'">
       <span class="board-name">汽车之家</span>
-      <span class="badge" style="background:#3b82f6;color:#fff">热榜</span>
-    </div>
-    <div class="list">
-      <div class="item" onclick="window.open('https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=cms_375e2a856b55f503187def7c85fa2916','_blank')">
-        <div class="rank rank-top">1</div>
-        <div class="item-body">
-          <a class="item-title" href="https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=cms_375e2a856b55f503187def7c85fa2916" target="_blank" rel="noopener">魏牌V9X今日上市</a>
-          <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:100%;background:#d1d5db"></div></div>
-            <span class="hot-num">473.8万</span>
-          </div>
-        </div>
-      </div>
-      <div class="item" onclick="window.open('https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=cms_f96511a86ed91455cc11f37427532d43','_blank')">
-        <div class="rank rank-top">2</div>
-        <div class="item-body">
-          <a class="item-title" href="https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=cms_f96511a86ed91455cc11f37427532d43" target="_blank" rel="noopener">小米YU7 GT将于5月21日上市</a>
-          <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:83%;background:#d1d5db"></div></div>
-            <span class="hot-num">393.6万</span>
-          </div>
-        </div>
-      </div>
-      <div class="item" onclick="window.open('https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=54068e4b9e8c36e9b79d054c57dd153b','_blank')">
-        <div class="rank rank-top">3</div>
-        <div class="item-body">
-          <a class="item-title" href="https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=54068e4b9e8c36e9b79d054c57dd153b" target="_blank" rel="noopener">自媒体博主被判赔比亚迪200万</a>
-          <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:73%;background:#d1d5db"></div></div>
-            <span class="hot-num">345.7万</span>
-          </div>
-        </div>
-      </div>
-      <div class="item" onclick="window.open('https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=cms_aef47bc2773c76f39444cebbc38f6c45','_blank')">
-        <div class="rank rank-accent">4</div>
-        <div class="item-body">
-          <a class="item-title" href="https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=cms_aef47bc2773c76f39444cebbc38f6c45" target="_blank" rel="noopener">小米YU7青春版实车亮相</a>
-          <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:57%;background:#d1d5db"></div></div>
-            <span class="hot-num">269.9万</span>
-          </div>
-        </div>
-      </div>
-      <div class="item" onclick="window.open('https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=30998b3e95c1350d8579699bcea76aee','_blank')">
-        <div class="rank rank-accent">5</div>
-        <div class="item-body">
-          <a class="item-title" href="https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=30998b3e95c1350d8579699bcea76aee" target="_blank" rel="noopener">东风奕派M8将于5月23日亮相</a>
-          <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:50%;background:#d1d5db"></div></div>
-            <span class="hot-num">234.9万</span>
-          </div>
-        </div>
-      </div>
-      <div class="item" onclick="window.open('https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=cms_c0b33d1b67167490cd3ae283c5dbd8f0','_blank')">
-        <div class="rank rank-accent">6</div>
-        <div class="item-body">
-          <a class="item-title" href="https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=cms_c0b33d1b67167490cd3ae283c5dbd8f0" target="_blank" rel="noopener">网传考驾照难度大增不实</a>
-          <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:38%;background:#d1d5db"></div></div>
-            <span class="hot-num">179.3万</span>
-          </div>
-        </div>
-      </div>
-      <div class="item" onclick="window.open('https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=cms_0e7e2c33c6e3e04288059e6fcc48399f','_blank')">
-        <div class="rank rank-accent">7</div>
-        <div class="item-body">
-          <a class="item-title" href="https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=cms_0e7e2c33c6e3e04288059e6fcc48399f" target="_blank" rel="noopener">新能源车集体涨价</a>
-          <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:34%;background:#d1d5db"></div></div>
-            <span class="hot-num">161.5万</span>
-          </div>
-        </div>
-      </div>
-      <div class="item" onclick="window.open('https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=5ae2ae34cc073d598f6a44ebb9f95851','_blank')">
-        <div class="rank rank-accent">8</div>
-        <div class="item-body">
-          <a class="item-title" href="https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=5ae2ae34cc073d598f6a44ebb9f95851" target="_blank" rel="noopener">零跑首款MPV D99内饰曝光</a>
-          <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:32%;background:#d1d5db"></div></div>
-            <span class="hot-num">152.0万</span>
-          </div>
-        </div>
-      </div>
-      <div class="item" onclick="window.open('https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=92f86bafa55d3db68ef2a138ef0409fb','_blank')">
-        <div class="rank rank-accent">9</div>
-        <div class="item-body">
-          <a class="item-title" href="https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=92f86bafa55d3db68ef2a138ef0409fb" target="_blank" rel="noopener">全新纯电奔驰GLC将于6月初开启预售</a>
-          <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:30%;background:#d1d5db"></div></div>
-            <span class="hot-num">141.0万</span>
-          </div>
-        </div>
-      </div>
-      <div class="item" onclick="window.open('https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=29cc8abd619a35bdbe0adfe85fbf9a27','_blank')">
-        <div class="rank rank-accent">10</div>
-        <div class="item-body">
-          <a class="item-title" href="https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=29cc8abd619a35bdbe0adfe85fbf9a27" target="_blank" rel="noopener">问界M9首搭2.0T增程器</a>
-          <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:27%;background:#d1d5db"></div></div>
-            <span class="hot-num">126.5万</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="board" id="dcd-hot">
-    <div class="board-head">
-      <img class="logo" src="https://icon.horse/icon/www.dongchedi.com" alt="懂车帝" onerror="this.style.display='none'">
-      <span class="board-name">懂车帝</span>
-      <span class="badge" style="background:#eab308;color:#fff">热点榜</span>
+      <span class="badge" style="background:#2B6BE6;color:#fff">热榜</span>
     </div>
     <div class="list">
       <div class="item" onclick="window.open('https://www.dongchedi.com/search?keyword=%E5%B0%8F%E7%B1%B3YU7%20GT%E4%B8%8A%E5%B8%82%E5%AE%9A%E6%A1%A35%E6%9C%8821%E6%97%A5','_blank')">
@@ -172,7 +58,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.dongchedi.com/search?keyword=%E5%B0%8F%E7%B1%B3YU7%20GT%E4%B8%8A%E5%B8%82%E5%AE%9A%E6%A1%A35%E6%9C%8821%E6%97%A5" target="_blank" rel="noopener">小米YU7 GT上市定档5月21日</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:100%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:100%;background:#b0b0b0"></div></div>
             <span class="hot-num">302.3w</span>
           </div>
         </div>
@@ -182,7 +68,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.dongchedi.com/search?keyword=%E5%BC%A0%E9%9B%AA%E9%81%87%E4%B8%8A%E5%93%88%E8%92%99%E5%BE%B7%20%E4%B8%AD%E5%A4%96%E6%91%A9%E6%89%98%E8%B5%9B%E9%81%93%E5%AF%B9%E5%86%B3" target="_blank" rel="noopener">张雪遇上哈蒙德 中外摩托赛道对决</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:83%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:83%;background:#b0b0b0"></div></div>
             <span class="hot-num">252.0w</span>
           </div>
         </div>
@@ -192,7 +78,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.dongchedi.com/search?keyword=%E6%9D%8E%E6%96%8C%EF%BC%9A%E7%BA%AF%E7%94%B5%E5%A4%A7%E4%B8%89%E6%8E%92%E6%8B%90%E7%82%B9%E5%B7%B2%E7%BB%8F%E5%88%B0%E4%BA%86" target="_blank" rel="noopener">李斌：纯电大三排拐点已经到了</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:22%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:22%;background:#b0b0b0"></div></div>
             <span class="hot-num">66.9w</span>
           </div>
         </div>
@@ -202,7 +88,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.dongchedi.com/search?keyword=%E7%BA%BD%E5%8D%9A%E6%A0%BC%E6%9E%97%E8%80%90%E5%8A%9B%E8%B5%9B%E7%BB%B4%E6%96%AF%E5%A1%94%E6%BD%98%E8%BD%A6%E9%98%9F%E9%80%80%E8%B5%9B" target="_blank" rel="noopener">纽博格林耐力赛维斯塔潘车队退赛</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:17%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:17%;background:#b0b0b0"></div></div>
             <span class="hot-num">50.5w</span>
           </div>
         </div>
@@ -212,7 +98,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.dongchedi.com/search?keyword=%E9%9B%B6%E8%B7%91%E9%A6%96%E6%AC%BEMPV%E8%BD%A6%E5%9E%8BD99%E5%86%85%E9%A5%B0%E5%85%AC%E5%B8%83" target="_blank" rel="noopener">零跑首款MPV车型D99内饰公布</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:4%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:4%;background:#b0b0b0"></div></div>
             <span class="hot-num">12.5w</span>
           </div>
         </div>
@@ -222,7 +108,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.dongchedi.com/search?keyword=2026%E6%AC%BE%E7%BA%A2%E6%97%97H5%E5%AE%98%E5%9B%BE%E5%8F%91%E5%B8%83" target="_blank" rel="noopener">2026款红旗H5官图发布</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:3%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:3%;background:#b0b0b0"></div></div>
             <span class="hot-num">8.5w</span>
           </div>
         </div>
@@ -232,7 +118,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.dongchedi.com/search?keyword=%E8%87%AA%E5%AA%92%E4%BD%93%E5%8D%9A%E4%B8%BB%E8%A2%AB%E5%88%A4%E8%B5%94%E6%AF%94%E4%BA%9A%E8%BF%AA200%E4%B8%87" target="_blank" rel="noopener">自媒体博主被判赔比亚迪200万</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:2%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:2%;background:#b0b0b0"></div></div>
             <span class="hot-num">4.9w</span>
           </div>
         </div>
@@ -242,7 +128,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.dongchedi.com/search?keyword=%E5%85%A8%E6%96%B0%E4%B8%80%E4%BB%A3%E9%97%AE%E7%95%8CM9%E9%A2%84%E8%AE%A2%E7%A0%B45%E4%B8%87%E5%8F%B0" target="_blank" rel="noopener">全新一代问界M9预订破5万台</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:2%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:2%;background:#b0b0b0"></div></div>
             <span class="hot-num">4.7w</span>
           </div>
         </div>
@@ -252,7 +138,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.dongchedi.com/search?keyword=%E5%B0%8A%E7%95%8CS800%E5%85%B8%E8%97%8F%E5%A4%A7%E8%A7%82%E5%AE%98%E5%9B%BE%E5%8F%91%E5%B8%83" target="_blank" rel="noopener">尊界S800典藏大观官图发布</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:1%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:1%;background:#b0b0b0"></div></div>
             <span class="hot-num">2.9w</span>
           </div>
         </div>
@@ -262,7 +148,116 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.dongchedi.com/search?keyword=%E9%97%AE%E7%95%8CM9%20Ultimate%E9%A6%96%E6%90%AD2.0T%E5%A2%9E%E7%A8%8B%E5%99%A8" target="_blank" rel="noopener">问界M9 Ultimate首搭2.0T增程器</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:1%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:1%;background:#b0b0b0"></div></div>
+            <span class="hot-num">2.8w</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="board" id="dcd-hot">
+    <div class="board-head">
+      <img class="logo" src="https://icon.horse/icon/www.dongchedi.com" alt="懂车帝" onerror="this.style.display='none'">
+      <span class="board-name">懂车帝</span>
+      <span class="badge" style="background:#F5C518;color:#fff">热榜</span>
+    </div>
+    <div class="list">
+      <div class="item" onclick="window.open('https://www.dongchedi.com/search?keyword=%E5%B0%8F%E7%B1%B3YU7%20GT%E4%B8%8A%E5%B8%82%E5%AE%9A%E6%A1%A35%E6%9C%8821%E6%97%A5','_blank')">
+        <div class="rank rank-top">1</div>
+        <div class="item-body">
+          <a class="item-title" href="https://www.dongchedi.com/search?keyword=%E5%B0%8F%E7%B1%B3YU7%20GT%E4%B8%8A%E5%B8%82%E5%AE%9A%E6%A1%A35%E6%9C%8821%E6%97%A5" target="_blank" rel="noopener">小米YU7 GT上市定档5月21日</a>
+          <div class="item-foot">
+            <div class="bar-wrap"><div class="bar-fill" style="width:100%;background:#b0b0b0"></div></div>
+            <span class="hot-num">302.3w</span>
+          </div>
+        </div>
+      </div>
+      <div class="item" onclick="window.open('https://www.dongchedi.com/search?keyword=%E5%BC%A0%E9%9B%AA%E9%81%87%E4%B8%8A%E5%93%88%E8%92%99%E5%BE%B7%20%E4%B8%AD%E5%A4%96%E6%91%A9%E6%89%98%E8%B5%9B%E9%81%93%E5%AF%B9%E5%86%B3','_blank')">
+        <div class="rank rank-top">2</div>
+        <div class="item-body">
+          <a class="item-title" href="https://www.dongchedi.com/search?keyword=%E5%BC%A0%E9%9B%AA%E9%81%87%E4%B8%8A%E5%93%88%E8%92%99%E5%BE%B7%20%E4%B8%AD%E5%A4%96%E6%91%A9%E6%89%98%E8%B5%9B%E9%81%93%E5%AF%B9%E5%86%B3" target="_blank" rel="noopener">张雪遇上哈蒙德 中外摩托赛道对决</a>
+          <div class="item-foot">
+            <div class="bar-wrap"><div class="bar-fill" style="width:83%;background:#b0b0b0"></div></div>
+            <span class="hot-num">252.0w</span>
+          </div>
+        </div>
+      </div>
+      <div class="item" onclick="window.open('https://www.dongchedi.com/search?keyword=%E6%9D%8E%E6%96%8C%EF%BC%9A%E7%BA%AF%E7%94%B5%E5%A4%A7%E4%B8%89%E6%8E%92%E6%8B%90%E7%82%B9%E5%B7%B2%E7%BB%8F%E5%88%B0%E4%BA%86','_blank')">
+        <div class="rank rank-top">3</div>
+        <div class="item-body">
+          <a class="item-title" href="https://www.dongchedi.com/search?keyword=%E6%9D%8E%E6%96%8C%EF%BC%9A%E7%BA%AF%E7%94%B5%E5%A4%A7%E4%B8%89%E6%8E%92%E6%8B%90%E7%82%B9%E5%B7%B2%E7%BB%8F%E5%88%B0%E4%BA%86" target="_blank" rel="noopener">李斌：纯电大三排拐点已经到了</a>
+          <div class="item-foot">
+            <div class="bar-wrap"><div class="bar-fill" style="width:22%;background:#b0b0b0"></div></div>
+            <span class="hot-num">66.9w</span>
+          </div>
+        </div>
+      </div>
+      <div class="item" onclick="window.open('https://www.dongchedi.com/search?keyword=%E7%BA%BD%E5%8D%9A%E6%A0%BC%E6%9E%97%E8%80%90%E5%8A%9B%E8%B5%9B%E7%BB%B4%E6%96%AF%E5%A1%94%E6%BD%98%E8%BD%A6%E9%98%9F%E9%80%80%E8%B5%9B','_blank')">
+        <div class="rank rank-accent">4</div>
+        <div class="item-body">
+          <a class="item-title" href="https://www.dongchedi.com/search?keyword=%E7%BA%BD%E5%8D%9A%E6%A0%BC%E6%9E%97%E8%80%90%E5%8A%9B%E8%B5%9B%E7%BB%B4%E6%96%AF%E5%A1%94%E6%BD%98%E8%BD%A6%E9%98%9F%E9%80%80%E8%B5%9B" target="_blank" rel="noopener">纽博格林耐力赛维斯塔潘车队退赛</a>
+          <div class="item-foot">
+            <div class="bar-wrap"><div class="bar-fill" style="width:17%;background:#b0b0b0"></div></div>
+            <span class="hot-num">50.5w</span>
+          </div>
+        </div>
+      </div>
+      <div class="item" onclick="window.open('https://www.dongchedi.com/search?keyword=%E9%9B%B6%E8%B7%91%E9%A6%96%E6%AC%BEMPV%E8%BD%A6%E5%9E%8BD99%E5%86%85%E9%A5%B0%E5%85%AC%E5%B8%83','_blank')">
+        <div class="rank rank-accent">5</div>
+        <div class="item-body">
+          <a class="item-title" href="https://www.dongchedi.com/search?keyword=%E9%9B%B6%E8%B7%91%E9%A6%96%E6%AC%BEMPV%E8%BD%A6%E5%9E%8BD99%E5%86%85%E9%A5%B0%E5%85%AC%E5%B8%83" target="_blank" rel="noopener">零跑首款MPV车型D99内饰公布</a>
+          <div class="item-foot">
+            <div class="bar-wrap"><div class="bar-fill" style="width:4%;background:#b0b0b0"></div></div>
+            <span class="hot-num">12.5w</span>
+          </div>
+        </div>
+      </div>
+      <div class="item" onclick="window.open('https://www.dongchedi.com/search?keyword=2026%E6%AC%BE%E7%BA%A2%E6%97%97H5%E5%AE%98%E5%9B%BE%E5%8F%91%E5%B8%83','_blank')">
+        <div class="rank rank-accent">6</div>
+        <div class="item-body">
+          <a class="item-title" href="https://www.dongchedi.com/search?keyword=2026%E6%AC%BE%E7%BA%A2%E6%97%97H5%E5%AE%98%E5%9B%BE%E5%8F%91%E5%B8%83" target="_blank" rel="noopener">2026款红旗H5官图发布</a>
+          <div class="item-foot">
+            <div class="bar-wrap"><div class="bar-fill" style="width:3%;background:#b0b0b0"></div></div>
+            <span class="hot-num">8.5w</span>
+          </div>
+        </div>
+      </div>
+      <div class="item" onclick="window.open('https://www.dongchedi.com/search?keyword=%E8%87%AA%E5%AA%92%E4%BD%93%E5%8D%9A%E4%B8%BB%E8%A2%AB%E5%88%A4%E8%B5%94%E6%AF%94%E4%BA%9A%E8%BF%AA200%E4%B8%87','_blank')">
+        <div class="rank rank-accent">7</div>
+        <div class="item-body">
+          <a class="item-title" href="https://www.dongchedi.com/search?keyword=%E8%87%AA%E5%AA%92%E4%BD%93%E5%8D%9A%E4%B8%BB%E8%A2%AB%E5%88%A4%E8%B5%94%E6%AF%94%E4%BA%9A%E8%BF%AA200%E4%B8%87" target="_blank" rel="noopener">自媒体博主被判赔比亚迪200万</a>
+          <div class="item-foot">
+            <div class="bar-wrap"><div class="bar-fill" style="width:2%;background:#b0b0b0"></div></div>
+            <span class="hot-num">4.9w</span>
+          </div>
+        </div>
+      </div>
+      <div class="item" onclick="window.open('https://www.dongchedi.com/search?keyword=%E5%85%A8%E6%96%B0%E4%B8%80%E4%BB%A3%E9%97%AE%E7%95%8CM9%E9%A2%84%E8%AE%A2%E7%A0%B45%E4%B8%87%E5%8F%B0','_blank')">
+        <div class="rank rank-accent">8</div>
+        <div class="item-body">
+          <a class="item-title" href="https://www.dongchedi.com/search?keyword=%E5%85%A8%E6%96%B0%E4%B8%80%E4%BB%A3%E9%97%AE%E7%95%8CM9%E9%A2%84%E8%AE%A2%E7%A0%B45%E4%B8%87%E5%8F%B0" target="_blank" rel="noopener">全新一代问界M9预订破5万台</a>
+          <div class="item-foot">
+            <div class="bar-wrap"><div class="bar-fill" style="width:2%;background:#b0b0b0"></div></div>
+            <span class="hot-num">4.7w</span>
+          </div>
+        </div>
+      </div>
+      <div class="item" onclick="window.open('https://www.dongchedi.com/search?keyword=%E5%B0%8A%E7%95%8CS800%E5%85%B8%E8%97%8F%E5%A4%A7%E8%A7%82%E5%AE%98%E5%9B%BE%E5%8F%91%E5%B8%83','_blank')">
+        <div class="rank rank-accent">9</div>
+        <div class="item-body">
+          <a class="item-title" href="https://www.dongchedi.com/search?keyword=%E5%B0%8A%E7%95%8CS800%E5%85%B8%E8%97%8F%E5%A4%A7%E8%A7%82%E5%AE%98%E5%9B%BE%E5%8F%91%E5%B8%83" target="_blank" rel="noopener">尊界S800典藏大观官图发布</a>
+          <div class="item-foot">
+            <div class="bar-wrap"><div class="bar-fill" style="width:1%;background:#b0b0b0"></div></div>
+            <span class="hot-num">2.9w</span>
+          </div>
+        </div>
+      </div>
+      <div class="item" onclick="window.open('https://www.dongchedi.com/search?keyword=%E9%97%AE%E7%95%8CM9%20Ultimate%E9%A6%96%E6%90%AD2.0T%E5%A2%9E%E7%A8%8B%E5%99%A8','_blank')">
+        <div class="rank rank-accent">10</div>
+        <div class="item-body">
+          <a class="item-title" href="https://www.dongchedi.com/search?keyword=%E9%97%AE%E7%95%8CM9%20Ultimate%E9%A6%96%E6%90%AD2.0T%E5%A2%9E%E7%A8%8B%E5%99%A8" target="_blank" rel="noopener">问界M9 Ultimate首搭2.0T增程器</a>
+          <div class="item-foot">
+            <div class="bar-wrap"><div class="bar-fill" style="width:1%;background:#b0b0b0"></div></div>
             <span class="hot-num">2.8w</span>
           </div>
         </div>
@@ -273,7 +268,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
     <div class="board-head">
       <img class="logo" src="https://weibo.com/favicon.ico" alt="新浪微博" onerror="this.style.display='none'">
       <span class="board-name">新浪微博</span>
-      <span class="badge" style="background:#e17055;color:#fff">汽车热榜</span>
+      <span class="badge" style="background:#E6162D;color:#fff">汽车热搜</span>
     </div>
     <div class="list">
       <div class="item" onclick="window.open('https://www.ithome.com/0/951/967.htm','_blank')">
@@ -281,119 +276,38 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.ithome.com/0/951/967.htm" target="_blank" rel="noopener">中国首款全栈自研、前装量产的 Robotaxi：小鹏 GX 首台 Robotaxi 量产车下线，3000TOPS 算力全球最高</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:0%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:0%;background:#b0b0b0"></div></div>
             <span class="hot-num"></span>
           </div>
         </div>
       </div>
-      <div class="item" onclick="window.open('https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=cms_375e2a856b55f503187def7c85fa2916','_blank')">
+      <div class="item" onclick="window.open('https://www.baidu.com/s?wd=%E5%B8%82%E5%9C%BA%E8%AE%BE%E4%B8%80%E7%B1%B3%E4%B8%89%E7%9F%AE%E9%97%A8+%E5%BD%93%E5%9C%B0%EF%BC%9A%E6%8C%A1%E7%94%B5%E5%8A%A8%E8%BD%A6&sa=fyb_news&rsv_dl=fyb_news','_blank')">
         <div class="rank rank-top">2</div>
         <div class="item-body">
-          <a class="item-title" href="https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=cms_375e2a856b55f503187def7c85fa2916" target="_blank" rel="noopener">魏牌V9X今日上市</a>
+          <a class="item-title" href="https://www.baidu.com/s?wd=%E5%B8%82%E5%9C%BA%E8%AE%BE%E4%B8%80%E7%B1%B3%E4%B8%89%E7%9F%AE%E9%97%A8+%E5%BD%93%E5%9C%B0%EF%BC%9A%E6%8C%A1%E7%94%B5%E5%8A%A8%E8%BD%A6&sa=fyb_news&rsv_dl=fyb_news" target="_blank" rel="noopener">市场设一米三矮门 当地：挡电动车</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:100%;background:#d1d5db"></div></div>
-            <span class="hot-num">473.8万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:100%;background:#b0b0b0"></div></div>
+            <span class="hot-num">493.17w</span>
           </div>
         </div>
       </div>
-      <div class="item" onclick="window.open('https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=cms_f96511a86ed91455cc11f37427532d43','_blank')">
+      <div class="item" onclick="window.open('https://www.ithome.com/0/951/965.htm','_blank')">
         <div class="rank rank-top">3</div>
         <div class="item-body">
-          <a class="item-title" href="https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=cms_f96511a86ed91455cc11f37427532d43" target="_blank" rel="noopener">小米YU7 GT将于5月21日上市</a>
+          <a class="item-title" href="https://www.ithome.com/0/951/965.htm" target="_blank" rel="noopener">一汽悦意 08 轿车将于 5 月 29 日开启预售，提供纯电与增程双动力</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:83%;background:#d1d5db"></div></div>
-            <span class="hot-num">393.6万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:0%;background:#b0b0b0"></div></div>
+            <span class="hot-num"></span>
           </div>
         </div>
       </div>
-      <div class="item" onclick="window.open('https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=54068e4b9e8c36e9b79d054c57dd153b','_blank')">
-        <div class="rank rank-accent">4</div>
-        <div class="item-body">
-          <a class="item-title" href="https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=54068e4b9e8c36e9b79d054c57dd153b" target="_blank" rel="noopener">自媒体博主被判赔比亚迪200万</a>
-          <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:73%;background:#d1d5db"></div></div>
-            <span class="hot-num">345.7万</span>
-          </div>
-        </div>
-      </div>
-      <div class="item" onclick="window.open('https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=cms_aef47bc2773c76f39444cebbc38f6c45','_blank')">
-        <div class="rank rank-accent">5</div>
-        <div class="item-body">
-          <a class="item-title" href="https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=cms_aef47bc2773c76f39444cebbc38f6c45" target="_blank" rel="noopener">小米YU7青春版实车亮相</a>
-          <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:57%;background:#d1d5db"></div></div>
-            <span class="hot-num">269.9万</span>
-          </div>
-        </div>
-      </div>
-      <div class="item" onclick="window.open('https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=30998b3e95c1350d8579699bcea76aee','_blank')">
-        <div class="rank rank-accent">6</div>
-        <div class="item-body">
-          <a class="item-title" href="https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=30998b3e95c1350d8579699bcea76aee" target="_blank" rel="noopener">东风奕派M8将于5月23日亮相</a>
-          <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:50%;background:#d1d5db"></div></div>
-            <span class="hot-num">234.9万</span>
-          </div>
-        </div>
-      </div>
-      <div class="item" onclick="window.open('https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=cms_c0b33d1b67167490cd3ae283c5dbd8f0','_blank')">
-        <div class="rank rank-accent">7</div>
-        <div class="item-body">
-          <a class="item-title" href="https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=cms_c0b33d1b67167490cd3ae283c5dbd8f0" target="_blank" rel="noopener">网传考驾照难度大增不实</a>
-          <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:38%;background:#d1d5db"></div></div>
-            <span class="hot-num">179.3万</span>
-          </div>
-        </div>
-      </div>
-      <div class="item" onclick="window.open('https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=cms_0e7e2c33c6e3e04288059e6fcc48399f','_blank')">
-        <div class="rank rank-accent">8</div>
-        <div class="item-body">
-          <a class="item-title" href="https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=cms_0e7e2c33c6e3e04288059e6fcc48399f" target="_blank" rel="noopener">新能源车集体涨价</a>
-          <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:34%;background:#d1d5db"></div></div>
-            <span class="hot-num">161.5万</span>
-          </div>
-        </div>
-      </div>
-      <div class="item" onclick="window.open('https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=5ae2ae34cc073d598f6a44ebb9f95851','_blank')">
-        <div class="rank rank-accent">9</div>
-        <div class="item-body">
-          <a class="item-title" href="https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=5ae2ae34cc073d598f6a44ebb9f95851" target="_blank" rel="noopener">零跑首款MPV D99内饰曝光</a>
-          <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:32%;background:#d1d5db"></div></div>
-            <span class="hot-num">152.0万</span>
-          </div>
-        </div>
-      </div>
-      <div class="item" onclick="window.open('https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=92f86bafa55d3db68ef2a138ef0409fb','_blank')">
-        <div class="rank rank-accent">10</div>
-        <div class="item-body">
-          <a class="item-title" href="https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=92f86bafa55d3db68ef2a138ef0409fb" target="_blank" rel="noopener">全新纯电奔驰GLC将于6月初开启预售</a>
-          <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:30%;background:#d1d5db"></div></div>
-            <span class="hot-num">141.0万</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="board" id="tt-auto">
-    <div class="board-head">
-      <img class="logo" src="https://www.toutiao.com/favicon.ico" alt="今日头条" onerror="this.style.display='none'">
-      <span class="board-name">今日头条</span>
-      <span class="badge" style="background:#F85959;color:#fff">汽车热榜</span>
-    </div>
-    <div class="list">
-      <div class="empty-tip">当前时段暂无相关话题</div>
-
     </div>
   </div>
   <div class="board" id="tt-hot">
     <div class="board-head">
       <img class="logo" src="https://www.toutiao.com/favicon.ico" alt="今日头条" onerror="this.style.display='none'">
       <span class="board-name">今日头条</span>
-      <span class="badge" style="background:#ff4757;color:#fff">头条热榜</span>
+      <span class="badge" style="background:#F85959;color:#fff">头条热榜</span>
     </div>
     <div class="list">
       <div class="item" onclick="window.open('https://www.toutiao.com/trending/7640323424036929590','_blank')">
@@ -401,8 +315,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.toutiao.com/trending/7640323424036929590" target="_blank" rel="noopener">泡药杨梅曝光后不少商家主动断货</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:100%;background:#d1d5db"></div></div>
-            <span class="hot-num">3838.4万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:100%;background:#b0b0b0"></div></div>
+            <span class="hot-num">3839.9万</span>
           </div>
         </div>
       </div>
@@ -411,8 +325,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.toutiao.com/trending/7641146903698653227" target="_blank" rel="noopener">马斯克称十年后自驾成小众</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:90%;background:#d1d5db"></div></div>
-            <span class="hot-num">3473.1万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:90%;background:#b0b0b0"></div></div>
+            <span class="hot-num">3474.5万</span>
           </div>
         </div>
       </div>
@@ -421,8 +335,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.toutiao.com/article/7641040875706991142" target="_blank" rel="noopener">文物“活”起来 文博“潮”出圈</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:82%;background:#d1d5db"></div></div>
-            <span class="hot-num">3142.6万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:82%;background:#b0b0b0"></div></div>
+            <span class="hot-num">3143.8万</span>
           </div>
         </div>
       </div>
@@ -431,8 +345,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://webcast-open.douyin.com/open/media_live/120828585055" target="_blank" rel="noopener">直击柳州地震救援现场</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:74%;background:#d1d5db"></div></div>
-            <span class="hot-num">2843.6万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:74%;background:#b0b0b0"></div></div>
+            <span class="hot-num">2844.6万</span>
           </div>
         </div>
       </div>
@@ -441,8 +355,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://webcast-open.douyin.com/open/media_live/330698468897" target="_blank" rel="noopener">《新闻联播》正在直播</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:67%;background:#d1d5db"></div></div>
-            <span class="hot-num">2573.0万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:67%;background:#b0b0b0"></div></div>
+            <span class="hot-num">2573.9万</span>
           </div>
         </div>
       </div>
@@ -451,8 +365,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.toutiao.com/trending/7641014911011766282" target="_blank" rel="noopener">公安部通报10起非法破解无人机案例</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:61%;background:#d1d5db"></div></div>
-            <span class="hot-num">2328.1万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:61%;background:#b0b0b0"></div></div>
+            <span class="hot-num">2329.0万</span>
           </div>
         </div>
       </div>
@@ -461,8 +375,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.toutiao.com/trending/7640169240372723754" target="_blank" rel="noopener">伊朗成立管理霍尔木兹海峡新机构</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:55%;background:#d1d5db"></div></div>
-            <span class="hot-num">2106.6万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:55%;background:#b0b0b0"></div></div>
+            <span class="hot-num">2107.4万</span>
           </div>
         </div>
       </div>
@@ -471,8 +385,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.toutiao.com/trending/7640807393035239462" target="_blank" rel="noopener">男子为同村亡者抬棺时突发心梗离世</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:50%;background:#d1d5db"></div></div>
-            <span class="hot-num">1906.1万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:50%;background:#b0b0b0"></div></div>
+            <span class="hot-num">1906.8万</span>
           </div>
         </div>
       </div>
@@ -481,8 +395,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.toutiao.com/trending/7641151353217093161" target="_blank" rel="noopener">评论员：普京访华将聚焦三个方面</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:45%;background:#d1d5db"></div></div>
-            <span class="hot-num">1724.7万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:45%;background:#b0b0b0"></div></div>
+            <span class="hot-num">1725.4万</span>
           </div>
         </div>
       </div>
@@ -491,8 +405,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.toutiao.com/trending/7641154820116512814" target="_blank" rel="noopener">中央追逃办：刘亮被遣返回国</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:41%;background:#d1d5db"></div></div>
-            <span class="hot-num">1560.6万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:41%;background:#b0b0b0"></div></div>
+            <span class="hot-num">1561.2万</span>
           </div>
         </div>
       </div>
@@ -501,8 +415,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.toutiao.com/trending/7641081747052183595" target="_blank" rel="noopener">男子住70元酒店发现空调挂女士内裤</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:37%;background:#d1d5db"></div></div>
-            <span class="hot-num">1412.1万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:37%;background:#b0b0b0"></div></div>
+            <span class="hot-num">1412.6万</span>
           </div>
         </div>
       </div>
@@ -511,8 +425,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.toutiao.com/trending/7640387927403806771" target="_blank" rel="noopener">襄阳暴雨致道路及车辆被淹？假的</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:33%;background:#d1d5db"></div></div>
-            <span class="hot-num">1277.7万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:33%;background:#b0b0b0"></div></div>
+            <span class="hot-num">1278.2万</span>
           </div>
         </div>
       </div>
@@ -521,8 +435,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.toutiao.com/trending/7640727919974727699" target="_blank" rel="noopener">网友车内发生性关系后男方被告强奸</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:30%;background:#d1d5db"></div></div>
-            <span class="hot-num">1156.1万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:30%;background:#b0b0b0"></div></div>
+            <span class="hot-num">1156.5万</span>
           </div>
         </div>
       </div>
@@ -531,8 +445,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.toutiao.com/trending/7639976062948245567" target="_blank" rel="noopener">张雪：可以憧憬年度冠军了</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:27%;background:#d1d5db"></div></div>
-            <span class="hot-num">1046.1万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:27%;background:#b0b0b0"></div></div>
+            <span class="hot-num">1046.5万</span>
           </div>
         </div>
       </div>
@@ -541,8 +455,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.toutiao.com/trending/7641129077530132522" target="_blank" rel="noopener">俄前驻华大使称普京访华会非常好</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:25%;background:#d1d5db"></div></div>
-            <span class="hot-num">946.5万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:25%;background:#b0b0b0"></div></div>
+            <span class="hot-num">946.9万</span>
           </div>
         </div>
       </div>
@@ -551,8 +465,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.toutiao.com/trending/7641131268742103059" target="_blank" rel="noopener">国防部回应中美两军关系</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:22%;background:#d1d5db"></div></div>
-            <span class="hot-num">856.5万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:22%;background:#b0b0b0"></div></div>
+            <span class="hot-num">856.8万</span>
           </div>
         </div>
       </div>
@@ -561,8 +475,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.toutiao.com/trending/7641150704828026404" target="_blank" rel="noopener">德比斯为什么这么招人稀罕</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:20%;background:#d1d5db"></div></div>
-            <span class="hot-num">775.0万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:20%;background:#b0b0b0"></div></div>
+            <span class="hot-num">775.3万</span>
           </div>
         </div>
       </div>
@@ -571,8 +485,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.toutiao.com/trending/7641142642335551018" target="_blank" rel="noopener">金银还会继续跌吗</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:18%;background:#d1d5db"></div></div>
-            <span class="hot-num">701.2万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:18%;background:#b0b0b0"></div></div>
+            <span class="hot-num">701.5万</span>
           </div>
         </div>
       </div>
@@ -581,8 +495,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.toutiao.com/trending/7641033902121058340" target="_blank" rel="noopener">特朗普涉台“四不”示警“台独”</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:17%;background:#d1d5db"></div></div>
-            <span class="hot-num">634.5万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:17%;background:#b0b0b0"></div></div>
+            <span class="hot-num">634.7万</span>
           </div>
         </div>
       </div>
@@ -591,8 +505,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.toutiao.com/trending/7641056158509170730" target="_blank" rel="noopener">柳州一小店给受灾群众免费供应螺蛳粉</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:15%;background:#d1d5db"></div></div>
-            <span class="hot-num">574.1万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:15%;background:#b0b0b0"></div></div>
+            <span class="hot-num">574.3万</span>
           </div>
         </div>
       </div>
@@ -602,7 +516,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
     <div class="board-head">
       <img class="logo" src="https://www.douyin.com/favicon.ico" alt="抖音" onerror="this.style.display='none'">
       <span class="board-name">抖音</span>
-      <span class="badge" style="background:#1a1a2e;color:#fff">热榜</span>
+      <span class="badge" style="background:#FE2C55;color:#fff">热榜</span>
     </div>
     <div class="list">
       <div class="item" onclick="window.open('https://www.douyin.com/search/%E5%A4%96%E4%BA%A4%E9%83%A8%E5%9B%9E%E5%BA%94%E7%89%B9%E6%9C%97%E6%99%AE%E6%B6%89%E5%8F%B0%E8%A1%A8%E6%80%81','_blank')">
@@ -610,7 +524,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.douyin.com/search/%E5%A4%96%E4%BA%A4%E9%83%A8%E5%9B%9E%E5%BA%94%E7%89%B9%E6%9C%97%E6%99%AE%E6%B6%89%E5%8F%B0%E8%A1%A8%E6%80%81" target="_blank" rel="noopener">外交部回应特朗普涉台表态</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:100%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:100%;background:#b0b0b0"></div></div>
             <span class="hot-num">1179.8万</span>
           </div>
         </div>
@@ -620,7 +534,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.douyin.com/search/%E6%B9%96%E5%8D%97%E7%9F%B3%E9%97%A8%E5%8E%BF%E9%81%AD%E9%81%87%E6%9E%81%E7%AB%AF%E6%9A%B4%E9%9B%A8" target="_blank" rel="noopener">湖南石门县遭遇极端暴雨</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:99%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:99%;background:#b0b0b0"></div></div>
             <span class="hot-num">1164.0万</span>
           </div>
         </div>
@@ -630,7 +544,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.douyin.com/search/%E5%89%8D4%E4%B8%AA%E6%9C%88%E5%9B%BD%E6%B0%91%E7%BB%8F%E6%B5%8E%E7%A8%B3%E4%B8%AD%E6%9C%89%E8%BF%9B" target="_blank" rel="noopener">前4个月国民经济稳中有进</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:96%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:96%;background:#b0b0b0"></div></div>
             <span class="hot-num">1137.5万</span>
           </div>
         </div>
@@ -640,7 +554,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.douyin.com/search/%E5%8E%BB%E5%93%AA%E6%89%BE%E5%8F%88%E7%9C%8B%E7%94%84%E5%AC%9B%E4%BC%A0%E5%8F%88%E7%8E%A9%E6%8B%BC%E8%B1%86%E7%9A%84%E4%BA%BA" target="_blank" rel="noopener">去哪找又看甄嬛传又玩拼豆的人</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:95%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:95%;background:#b0b0b0"></div></div>
             <span class="hot-num">1115.5万</span>
           </div>
         </div>
@@ -650,7 +564,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.douyin.com/search/%E5%85%AC%E5%AE%89%E9%83%A8%E9%80%9A%E6%8A%A5%E9%9D%9E%E6%B3%95%E7%A0%B4%E8%A7%A3%E6%97%A0%E4%BA%BA%E6%9C%BA%E6%A1%88%E4%BE%8B" target="_blank" rel="noopener">公安部通报非法破解无人机案例</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:89%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:89%;background:#b0b0b0"></div></div>
             <span class="hot-num">1053.5万</span>
           </div>
         </div>
@@ -660,7 +574,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.douyin.com/search/%E7%BE%8E%E5%9B%BD%E4%B8%A4%E6%9E%B6%E6%88%98%E6%9C%BA%E5%9C%A8%E7%A9%BA%E4%B8%AD%E7%A2%B0%E6%92%9E%E5%90%8E%E5%9D%A0%E6%9C%BA" target="_blank" rel="noopener">美国两架战机在空中碰撞后坠机</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:80%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:80%;background:#b0b0b0"></div></div>
             <span class="hot-num">939.7万</span>
           </div>
         </div>
@@ -670,7 +584,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.douyin.com/search/%E9%AA%91%E5%A3%AB4%3A3%E6%B4%BB%E5%A1%9E%E6%99%8B%E7%BA%A7%E4%B8%9C%E5%86%B3" target="_blank" rel="noopener">骑士4:3活塞晋级东决</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:80%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:80%;background:#b0b0b0"></div></div>
             <span class="hot-num">939.6万</span>
           </div>
         </div>
@@ -680,7 +594,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.douyin.com/search/%E5%A7%9C%E4%B9%98%E6%BE%9C%E4%BA%9A%E8%A3%94%E6%B7%B7%E8%A1%80%E6%84%9Fmotd" target="_blank" rel="noopener">姜乘澜亚裔混血感motd</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:78%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:78%;background:#b0b0b0"></div></div>
             <span class="hot-num">920.7万</span>
           </div>
         </div>
@@ -690,7 +604,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.douyin.com/search/%E5%B9%BF%E8%A5%BF%E6%9F%B3%E5%B7%9E%E5%9C%B0%E9%9C%87%E5%B7%B2%E8%87%B42%E6%AD%BB" target="_blank" rel="noopener">广西柳州地震已致2死</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:78%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:78%;background:#b0b0b0"></div></div>
             <span class="hot-num">919.9万</span>
           </div>
         </div>
@@ -700,7 +614,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.douyin.com/search/%E7%9B%B4%E5%87%BB%E6%9F%B3%E5%B7%9E%E5%9C%B0%E9%9C%87%E6%95%91%E6%8F%B4%E7%8E%B0%E5%9C%BA" target="_blank" rel="noopener">直击柳州地震救援现场</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:78%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:78%;background:#b0b0b0"></div></div>
             <span class="hot-num">918.7万</span>
           </div>
         </div>
@@ -710,7 +624,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.douyin.com/search/%E4%BA%B2%E7%88%B1%E7%9A%84%E6%9C%8B%E5%8F%8B%E6%AD%A4%E5%88%BB%E4%BD%A0%E5%9C%A8%E5%B9%B2%E5%98%9B" target="_blank" rel="noopener">亲爱的朋友此刻你在干嘛</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:78%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:78%;background:#b0b0b0"></div></div>
             <span class="hot-num">916.3万</span>
           </div>
         </div>
@@ -720,7 +634,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.douyin.com/search/%E6%9F%B3%E5%B7%9E%E5%9C%B0%E9%9C%87%E6%9C%80%E5%90%8E1%E5%90%8D%E8%A2%AB%E5%9B%B0%E4%BA%BA%E5%91%98%E8%8E%B7%E6%95%91" target="_blank" rel="noopener">柳州地震最后1名被困人员获救</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:77%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:77%;background:#b0b0b0"></div></div>
             <span class="hot-num">913.7万</span>
           </div>
         </div>
@@ -730,7 +644,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.douyin.com/search/%E7%8E%8B%E8%80%85520%E7%9A%AE%E8%82%A4%E7%88%86%E6%96%99" target="_blank" rel="noopener">王者520皮肤爆料</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:77%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:77%;background:#b0b0b0"></div></div>
             <span class="hot-num">913.7万</span>
           </div>
         </div>
@@ -740,7 +654,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.douyin.com/search/%E5%9C%B0%E9%9C%87%E6%9D%A5%E8%A2%AD%E5%BA%94%E8%AF%A5%E6%80%8E%E4%B9%88%E8%BA%B2" target="_blank" rel="noopener">地震来袭应该怎么躲</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:77%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:77%;background:#b0b0b0"></div></div>
             <span class="hot-num">906.5万</span>
           </div>
         </div>
@@ -750,7 +664,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.douyin.com/search/%E6%B9%96%E5%8C%97%E8%8D%86%E5%B7%9E%E6%9E%81%E7%AB%AF%E5%BC%BA%E9%99%8D%E9%9B%A8" target="_blank" rel="noopener">湖北荆州极端强降雨</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:76%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:76%;background:#b0b0b0"></div></div>
             <span class="hot-num">900.0万</span>
           </div>
         </div>
@@ -760,7 +674,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.douyin.com/search/%E9%98%BF%E5%AC%B7%E7%9A%84%E6%83%85%E4%B9%A615%E4%BA%BF%E7%A5%A8%E6%88%BF%E9%A2%84%E6%B5%8B%E4%BB%8E%E4%BD%95%E8%80%8C%E6%9D%A5" target="_blank" rel="noopener">阿嬷的情书15亿票房预测从何而来</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:76%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:76%;background:#b0b0b0"></div></div>
             <span class="hot-num">897.6万</span>
           </div>
         </div>
@@ -770,7 +684,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.douyin.com/search/%E6%A8%8A%E6%8C%AF%E4%B8%9C%E6%8B%BF%E4%B8%8B%E9%A6%96%E4%B8%AA%E6%AC%A7%E5%86%A0%E5%86%A0%E5%86%9B%E5%A5%96%E6%9D%AF" target="_blank" rel="noopener">樊振东拿下首个欧冠冠军奖杯</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:73%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:73%;background:#b0b0b0"></div></div>
             <span class="hot-num">856.7万</span>
           </div>
         </div>
@@ -780,7 +694,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.douyin.com/search/Hediboy%E7%A9%BF%E6%90%AD%E8%A7%A3%E6%9E%90" target="_blank" rel="noopener">Hediboy穿搭解析</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:72%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:72%;background:#b0b0b0"></div></div>
             <span class="hot-num">844.4万</span>
           </div>
         </div>
@@ -790,7 +704,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.douyin.com/search/%E5%BD%93%E6%88%91%E9%81%87%E5%88%B0%E5%B0%8F%E7%8C%AB%E5%92%AA%E6%88%91%E5%B0%B1%E8%BF%99%E6%A0%B7" target="_blank" rel="noopener">当我遇到小猫咪我就这样</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:67%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:67%;background:#b0b0b0"></div></div>
             <span class="hot-num">789.9万</span>
           </div>
         </div>
@@ -800,7 +714,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://www.douyin.com/search/%E5%8E%9F%E6%9D%A5%E6%98%AF%E9%A6%99%E9%A6%99%E8%BD%AF%E8%BD%AF%E7%9A%84%E5%B0%8F%E9%BC%A0%E9%BC%A0" target="_blank" rel="noopener">原来是香香软软的小鼠鼠</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:66%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:66%;background:#b0b0b0"></div></div>
             <span class="hot-num">783.0万</span>
           </div>
         </div>
@@ -811,7 +725,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
     <div class="board-head">
       <img class="logo" src="https://weibo.com/favicon.ico" alt="新浪微博" onerror="this.style.display='none'">
       <span class="board-name">新浪微博</span>
-      <span class="badge" style="background:#ff4500;color:#fff">热搜榜</span>
+      <span class="badge" style="background:#E6162D;color:#fff">热搜榜</span>
     </div>
     <div class="list">
       <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%E7%89%B9%E6%9C%97%E6%99%AE%E8%BF%9E%E5%8F%9115%E5%BC%A0%E5%9B%BE%E5%88%86%E4%BA%AB%E4%B8%AD%E5%9B%BD%E8%AE%B0%E5%BF%86','_blank')">
@@ -819,8 +733,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://s.weibo.com/weibo?q=%E7%89%B9%E6%9C%97%E6%99%AE%E8%BF%9E%E5%8F%9115%E5%BC%A0%E5%9B%BE%E5%88%86%E4%BA%AB%E4%B8%AD%E5%9B%BD%E8%AE%B0%E5%BF%86" target="_blank" rel="noopener">特朗普连发15张图分享中国记忆</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:100%;background:#d1d5db"></div></div>
-            <span class="hot-num">180.5万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:100%;background:#b0b0b0"></div></div>
+            <span class="hot-num">183.6万</span>
           </div>
         </div>
       </div>
@@ -829,8 +743,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://s.weibo.com/weibo?q=%E4%B8%8A%E6%B5%B7%E4%BA%A4%E5%A4%A7%E9%80%9A%E6%8A%A5%E5%AD%A6%E7%94%9F%E7%A7%81%E5%90%9E%E7%AB%9E%E8%B5%9B%E5%A5%96%E9%87%91" target="_blank" rel="noopener">上海交大通报学生私吞竞赛奖金</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:66%;background:#d1d5db"></div></div>
-            <span class="hot-num">119.7万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:67%;background:#b0b0b0"></div></div>
+            <span class="hot-num">122.4万</span>
           </div>
         </div>
       </div>
@@ -839,8 +753,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://s.weibo.com/weibo?q=2026%E4%B8%AD%E5%9B%BD%E7%BD%91%E7%BB%9C%E6%96%87%E6%98%8E%E5%A4%A7%E4%BC%9A" target="_blank" rel="noopener">2026中国网络文明大会</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:40%;background:#d1d5db"></div></div>
-            <span class="hot-num">72.6万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:42%;background:#b0b0b0"></div></div>
+            <span class="hot-num">76.9万</span>
           </div>
         </div>
       </div>
@@ -849,18 +763,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://s.weibo.com/weibo?q=%E4%BD%99%E7%A7%80%E5%8D%8E%E6%8A%A5%E8%AD%A6" target="_blank" rel="noopener">余秀华报警</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:35%;background:#d1d5db"></div></div>
-            <span class="hot-num">62.6万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:33%;background:#b0b0b0"></div></div>
+            <span class="hot-num">61.0万</span>
           </div>
         </div>
       </div>
-      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%E8%80%81%E4%B9%A1%E6%9D%AF','_blank')">
+      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%E6%AD%A6%E6%B1%89%E4%B8%80%E6%9D%91%E5%BA%84585%E4%BA%BA62%E4%BA%BA%E6%82%A3%E7%99%8C','_blank')">
         <div class="rank rank-accent">5</div>
         <div class="item-body">
-          <a class="item-title" href="https://s.weibo.com/weibo?q=%E8%80%81%E4%B9%A1%E6%9D%AF" target="_blank" rel="noopener">老乡杯</a>
+          <a class="item-title" href="https://s.weibo.com/weibo?q=%E6%AD%A6%E6%B1%89%E4%B8%80%E6%9D%91%E5%BA%84585%E4%BA%BA62%E4%BA%BA%E6%82%A3%E7%99%8C" target="_blank" rel="noopener">武汉一村庄585人62人患癌</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:22%;background:#d1d5db"></div></div>
-            <span class="hot-num">40.5万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:24%;background:#b0b0b0"></div></div>
+            <span class="hot-num">43.2万</span>
           </div>
         </div>
       </div>
@@ -869,18 +783,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://s.weibo.com/weibo?q=98%E5%B2%81%E5%A5%B6%E5%A5%B6%E6%8B%BF%E5%87%BA%E4%BA%86%E5%A5%B9%E5%BD%93%E5%B9%B4%E7%9A%84%E5%AB%81%E5%A6%86" target="_blank" rel="noopener">98岁奶奶拿出了她当年的嫁妆</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:22%;background:#d1d5db"></div></div>
-            <span class="hot-num">40.2万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:23%;background:#b0b0b0"></div></div>
+            <span class="hot-num">42.9万</span>
           </div>
         </div>
       </div>
-      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%E6%AD%A6%E6%B1%89%E4%B8%80%E6%9D%91%E5%BA%84585%E4%BA%BA62%E4%BA%BA%E6%82%A3%E7%99%8C','_blank')">
+      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%E8%80%81%E4%B9%A1%E6%9D%AF','_blank')">
         <div class="rank rank-accent">7</div>
         <div class="item-body">
-          <a class="item-title" href="https://s.weibo.com/weibo?q=%E6%AD%A6%E6%B1%89%E4%B8%80%E6%9D%91%E5%BA%84585%E4%BA%BA62%E4%BA%BA%E6%82%A3%E7%99%8C" target="_blank" rel="noopener">武汉一村庄585人62人患癌</a>
+          <a class="item-title" href="https://s.weibo.com/weibo?q=%E8%80%81%E4%B9%A1%E6%9D%AF" target="_blank" rel="noopener">老乡杯</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:21%;background:#d1d5db"></div></div>
-            <span class="hot-num">38.5万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:23%;background:#b0b0b0"></div></div>
+            <span class="hot-num">41.7万</span>
           </div>
         </div>
       </div>
@@ -889,8 +803,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://s.weibo.com/weibo?q=%E6%B1%9F%E8%8B%8F%E7%A8%8E%E5%8A%A1%E5%86%8D%E5%9B%9E%E5%BA%94%E5%81%B7%E6%8B%8D%E7%94%B7%E7%94%9F%E6%8B%9F%E5%BD%95%E5%85%AC%E5%8A%A1%E5%91%98" target="_blank" rel="noopener">江苏税务再回应偷拍男生拟录公务员</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:16%;background:#d1d5db"></div></div>
-            <span class="hot-num">29.0万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:17%;background:#b0b0b0"></div></div>
+            <span class="hot-num">31.1万</span>
           </div>
         </div>
       </div>
@@ -899,8 +813,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://s.weibo.com/weibo?q=%E7%90%86%E5%8F%91%E4%BB%B7%E6%A0%BC%E6%B6%A8%E4%BA%86%20%E6%8A%80%E6%9C%AF%E6%B2%A1%E6%B6%A8" target="_blank" rel="noopener">理发价格涨了 技术没涨</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:14%;background:#d1d5db"></div></div>
-            <span class="hot-num">25.3万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:14%;background:#b0b0b0"></div></div>
+            <span class="hot-num">25.7万</span>
           </div>
         </div>
       </div>
@@ -909,8 +823,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://s.weibo.com/weibo?q=%E7%A9%86%E9%87%8C%E5%B0%BC%E5%A5%A5%E5%B0%86%E5%9B%9E%E5%BD%92%E6%89%A7%E6%95%99%E7%9A%87%E9%A9%AC" target="_blank" rel="noopener">穆里尼奥将回归执教皇马</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:14%;background:#d1d5db"></div></div>
-            <span class="hot-num">24.4万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:14%;background:#b0b0b0"></div></div>
+            <span class="hot-num">25.4万</span>
           </div>
         </div>
       </div>
@@ -919,8 +833,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://s.weibo.com/weibo?q=%E5%A7%9C%E4%B9%98%E6%BE%9C%E8%A2%AB%E6%89%A7%E8%A1%8C1119%E4%B8%87" target="_blank" rel="noopener">姜乘澜被执行1119万</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:14%;background:#d1d5db"></div></div>
-            <span class="hot-num">24.4万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:14%;background:#b0b0b0"></div></div>
+            <span class="hot-num">25.4万</span>
           </div>
         </div>
       </div>
@@ -929,8 +843,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://s.weibo.com/weibo?q=%E7%8E%8B%E6%BF%9B%E7%98%A6%E6%88%90%E9%B9%BF%E6%99%97%E4%BA%86" target="_blank" rel="noopener">王濛瘦成鹿晗了</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:13%;background:#d1d5db"></div></div>
-            <span class="hot-num">24.3万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:14%;background:#b0b0b0"></div></div>
+            <span class="hot-num">25.4万</span>
           </div>
         </div>
       </div>
@@ -939,8 +853,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://s.weibo.com/weibo?q=%E6%9D%A8%E5%AD%90%E5%AE%B6%E6%97%8F%E7%96%AF%E7%8B%82%E5%A5%97%E7%8E%B0%E8%B6%8528%E4%BA%BF" target="_blank" rel="noopener">杨子家族疯狂套现超28亿</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:13%;background:#d1d5db"></div></div>
-            <span class="hot-num">24.2万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:14%;background:#b0b0b0"></div></div>
+            <span class="hot-num">25.3万</span>
           </div>
         </div>
       </div>
@@ -949,8 +863,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://s.weibo.com/weibo?q=%E6%B1%A4%E5%94%AF%E6%89%8B%E6%9C%BA%E5%A3%B3" target="_blank" rel="noopener">汤唯手机壳</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:13%;background:#d1d5db"></div></div>
-            <span class="hot-num">24.1万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:14%;background:#b0b0b0"></div></div>
+            <span class="hot-num">25.3万</span>
           </div>
         </div>
       </div>
@@ -959,28 +873,28 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://s.weibo.com/weibo?q=%E6%9B%9D%E7%9B%91%E7%8B%B1%E6%9D%A5%E7%9A%84%E5%A6%88%E5%A6%88%E6%92%A4%E6%A1%A3" target="_blank" rel="noopener">曝监狱来的妈妈撤档</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:13%;background:#d1d5db"></div></div>
-            <span class="hot-num">24.0万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:14%;background:#b0b0b0"></div></div>
+            <span class="hot-num">25.2万</span>
           </div>
         </div>
       </div>
-      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%E5%85%AC%E8%81%8C%E4%BA%BA%E5%91%98%E9%9A%90%E7%9E%92%E5%A9%9A%E5%8F%B2%E4%B8%8E%E5%A5%B3%E4%B8%BB%E6%92%AD%E4%BA%A4%E5%BE%80','_blank')">
+      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%E9%80%80%E5%AD%A6%E5%8D%9A%E5%A3%AB%E8%80%BF%E5%90%8C%E5%AD%A6%E5%B7%B2%E7%AD%BE%E7%BA%A6MCN','_blank')">
         <div class="rank rank-normal">16</div>
         <div class="item-body">
-          <a class="item-title" href="https://s.weibo.com/weibo?q=%E5%85%AC%E8%81%8C%E4%BA%BA%E5%91%98%E9%9A%90%E7%9E%92%E5%A9%9A%E5%8F%B2%E4%B8%8E%E5%A5%B3%E4%B8%BB%E6%92%AD%E4%BA%A4%E5%BE%80" target="_blank" rel="noopener">公职人员隐瞒婚史与女主播交往</a>
+          <a class="item-title" href="https://s.weibo.com/weibo?q=%E9%80%80%E5%AD%A6%E5%8D%9A%E5%A3%AB%E8%80%BF%E5%90%8C%E5%AD%A6%E5%B7%B2%E7%AD%BE%E7%BA%A6MCN" target="_blank" rel="noopener">退学博士耿同学已签约MCN</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:13%;background:#d1d5db"></div></div>
-            <span class="hot-num">23.9万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:14%;background:#b0b0b0"></div></div>
+            <span class="hot-num">25.2万</span>
           </div>
         </div>
       </div>
-      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%E9%AD%8F%E5%BB%BA%E5%86%9B%E6%89%BF%E8%AE%A4%E8%87%AA%E5%B7%B1%E6%80%95%E4%BA%86','_blank')">
+      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%E4%BD%95%E8%80%81%E5%B8%88%E4%B9%9F%E6%8E%A5%E5%8F%97%E4%B8%8D%E4%BA%86vip%E6%8A%A2%E5%85%88%E7%9C%8B','_blank')">
         <div class="rank rank-normal">17</div>
         <div class="item-body">
-          <a class="item-title" href="https://s.weibo.com/weibo?q=%E9%AD%8F%E5%BB%BA%E5%86%9B%E6%89%BF%E8%AE%A4%E8%87%AA%E5%B7%B1%E6%80%95%E4%BA%86" target="_blank" rel="noopener">魏建军承认自己怕了</a>
+          <a class="item-title" href="https://s.weibo.com/weibo?q=%E4%BD%95%E8%80%81%E5%B8%88%E4%B9%9F%E6%8E%A5%E5%8F%97%E4%B8%8D%E4%BA%86vip%E6%8A%A2%E5%85%88%E7%9C%8B" target="_blank" rel="noopener">何老师也接受不了vip抢先看</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:13%;background:#d1d5db"></div></div>
-            <span class="hot-num">23.8万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:14%;background:#b0b0b0"></div></div>
+            <span class="hot-num">25.0万</span>
           </div>
         </div>
       </div>
@@ -989,28 +903,28 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
         <div class="item-body">
           <a class="item-title" href="https://s.weibo.com/weibo?q=%E5%AE%B6%E4%B8%9A%E5%BC%80%E6%92%AD%E4%BA%91%E5%90%88" target="_blank" rel="noopener">家业开播云合</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:13%;background:#d1d5db"></div></div>
-            <span class="hot-num">23.7万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:14%;background:#b0b0b0"></div></div>
+            <span class="hot-num">24.8万</span>
           </div>
         </div>
       </div>
-      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%E4%BD%95%E8%80%81%E5%B8%88%E4%B9%9F%E6%8E%A5%E5%8F%97%E4%B8%8D%E4%BA%86vip%E6%8A%A2%E5%85%88%E7%9C%8B','_blank')">
+      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%E5%85%AC%E8%81%8C%E4%BA%BA%E5%91%98%E9%9A%90%E7%9E%92%E5%A9%9A%E5%8F%B2%E4%B8%8E%E5%A5%B3%E4%B8%BB%E6%92%AD%E4%BA%A4%E5%BE%80','_blank')">
         <div class="rank rank-normal">19</div>
         <div class="item-body">
-          <a class="item-title" href="https://s.weibo.com/weibo?q=%E4%BD%95%E8%80%81%E5%B8%88%E4%B9%9F%E6%8E%A5%E5%8F%97%E4%B8%8D%E4%BA%86vip%E6%8A%A2%E5%85%88%E7%9C%8B" target="_blank" rel="noopener">何老师也接受不了vip抢先看</a>
+          <a class="item-title" href="https://s.weibo.com/weibo?q=%E5%85%AC%E8%81%8C%E4%BA%BA%E5%91%98%E9%9A%90%E7%9E%92%E5%A9%9A%E5%8F%B2%E4%B8%8E%E5%A5%B3%E4%B8%BB%E6%92%AD%E4%BA%A4%E5%BE%80" target="_blank" rel="noopener">公职人员隐瞒婚史与女主播交往</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:13%;background:#d1d5db"></div></div>
-            <span class="hot-num">23.6万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:13%;background:#b0b0b0"></div></div>
+            <span class="hot-num">24.4万</span>
           </div>
         </div>
       </div>
-      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%E7%81%AB%E7%81%BE%E8%87%B4%E5%A5%B3%E7%94%9F%E4%B8%AD%E6%AF%92%E9%AB%98%E6%A0%A13%E6%AC%A1%E5%81%9C%E4%BB%98%E6%B2%BB%E7%96%97%E8%B4%B9','_blank')">
+      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%E9%AD%8F%E5%BB%BA%E5%86%9B%E6%89%BF%E8%AE%A4%E8%87%AA%E5%B7%B1%E6%80%95%E4%BA%86','_blank')">
         <div class="rank rank-normal">20</div>
         <div class="item-body">
-          <a class="item-title" href="https://s.weibo.com/weibo?q=%E7%81%AB%E7%81%BE%E8%87%B4%E5%A5%B3%E7%94%9F%E4%B8%AD%E6%AF%92%E9%AB%98%E6%A0%A13%E6%AC%A1%E5%81%9C%E4%BB%98%E6%B2%BB%E7%96%97%E8%B4%B9" target="_blank" rel="noopener">火灾致女生中毒高校3次停付治疗费</a>
+          <a class="item-title" href="https://s.weibo.com/weibo?q=%E9%AD%8F%E5%BB%BA%E5%86%9B%E6%89%BF%E8%AE%A4%E8%87%AA%E5%B7%B1%E6%80%95%E4%BA%86" target="_blank" rel="noopener">魏建军承认自己怕了</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:13%;background:#d1d5db"></div></div>
-            <span class="hot-num">23.5万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:13%;background:#b0b0b0"></div></div>
+            <span class="hot-num">24.0万</span>
           </div>
         </div>
       </div>
@@ -1020,86 +934,215 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
     <div class="board-head">
       <img class="logo" src="https://weibo.com/favicon.ico" alt="新浪微博" onerror="this.style.display='none'">
       <span class="board-name">新浪微博</span>
-      <span class="badge" style="background:#e84393;color:#fff">文娱热搜</span>
+      <span class="badge" style="background:#E6162D;color:#fff">文娱热搜</span>
     </div>
     <div class="list">
-      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%E5%AE%B6%E4%B8%9A%E5%BC%80%E6%92%AD%E4%BA%91%E5%90%88','_blank')">
+      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%23%E5%A7%9C%E4%B9%98%E6%BE%9C%E8%A2%AB%E6%89%A7%E8%A1%8C1119%E4%B8%87%23&t=152&Refer=top','_blank')">
         <div class="rank rank-top">1</div>
         <div class="item-body">
-          <a class="item-title" href="https://s.weibo.com/weibo?q=%E5%AE%B6%E4%B8%9A%E5%BC%80%E6%92%AD%E4%BA%91%E5%90%88" target="_blank" rel="noopener">家业开播云合</a>
+          <a class="item-title" href="https://s.weibo.com/weibo?q=%23%E5%A7%9C%E4%B9%98%E6%BE%9C%E8%A2%AB%E6%89%A7%E8%A1%8C1119%E4%B8%87%23&t=152&Refer=top" target="_blank" rel="noopener">姜乘澜被执行1119万</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:100%;background:#d1d5db"></div></div>
-            <span class="hot-num">23.7万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:100%;background:#b0b0b0"></div></div>
+            <span class="hot-num">270.0万</span>
           </div>
         </div>
       </div>
-      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%E6%9D%8E%E6%80%9D%E6%BD%BC%E5%B0%86%E6%88%90%E4%B8%BA00%E8%8A%B1%E4%B8%80%E7%95%AA%E7%A5%A8%E6%88%BF%E6%9C%80%E9%AB%98','_blank')">
+      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%E5%91%A8%E5%86%AC%E9%9B%A8%20%E5%88%98%E6%98%8A%E7%84%B6&t=152&Refer=top','_blank')">
         <div class="rank rank-top">2</div>
         <div class="item-body">
-          <a class="item-title" href="https://s.weibo.com/weibo?q=%E6%9D%8E%E6%80%9D%E6%BD%BC%E5%B0%86%E6%88%90%E4%B8%BA00%E8%8A%B1%E4%B8%80%E7%95%AA%E7%A5%A8%E6%88%BF%E6%9C%80%E9%AB%98" target="_blank" rel="noopener">李思潼将成为00花一番票房最高</a>
+          <a class="item-title" href="https://s.weibo.com/weibo?q=%E5%91%A8%E5%86%AC%E9%9B%A8%20%E5%88%98%E6%98%8A%E7%84%B6&t=152&Refer=top" target="_blank" rel="noopener">周冬雨 刘昊然</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:95%;background:#d1d5db"></div></div>
-            <span class="hot-num">22.4万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:70%;background:#b0b0b0"></div></div>
+            <span class="hot-num">189.0万</span>
           </div>
         </div>
       </div>
-      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%E5%BD%92%E9%B8%BE%E6%98%AF%E9%80%90%E7%8E%892.0%E5%90%97','_blank')">
+      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%23%E7%8E%8B%E6%BF%9B%E7%98%A6%E6%88%90%E9%B9%BF%E6%99%97%E4%BA%86%23&t=152&Refer=top','_blank')">
         <div class="rank rank-top">3</div>
         <div class="item-body">
-          <a class="item-title" href="https://s.weibo.com/weibo?q=%E5%BD%92%E9%B8%BE%E6%98%AF%E9%80%90%E7%8E%892.0%E5%90%97" target="_blank" rel="noopener">归鸾是逐玉2.0吗</a>
+          <a class="item-title" href="https://s.weibo.com/weibo?q=%23%E7%8E%8B%E6%BF%9B%E7%98%A6%E6%88%90%E9%B9%BF%E6%99%97%E4%BA%86%23&t=152&Refer=top" target="_blank" rel="noopener">王濛瘦成鹿晗了</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:90%;background:#d1d5db"></div></div>
-            <span class="hot-num">21.2万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:62%;background:#b0b0b0"></div></div>
+            <span class="hot-num">167.2万</span>
           </div>
         </div>
       </div>
-      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%E9%9A%BE%E6%80%AA%E6%9D%A8%E5%B9%82%E7%88%B8%E5%A6%88%E5%B0%8F%E6%97%B6%E5%80%99%E8%88%8D%E4%B8%8D%E5%BE%97%E6%89%93%E5%A5%B9','_blank')">
+      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%E6%B1%A4%E5%94%AF%E6%89%8B%E6%9C%BA%E5%A3%B3&t=152&Refer=top','_blank')">
         <div class="rank rank-accent">4</div>
         <div class="item-body">
-          <a class="item-title" href="https://s.weibo.com/weibo?q=%E9%9A%BE%E6%80%AA%E6%9D%A8%E5%B9%82%E7%88%B8%E5%A6%88%E5%B0%8F%E6%97%B6%E5%80%99%E8%88%8D%E4%B8%8D%E5%BE%97%E6%89%93%E5%A5%B9" target="_blank" rel="noopener">难怪杨幂爸妈小时候舍不得打她</a>
+          <a class="item-title" href="https://s.weibo.com/weibo?q=%E6%B1%A4%E5%94%AF%E6%89%8B%E6%9C%BA%E5%A3%B3&t=152&Refer=top" target="_blank" rel="noopener">汤唯手机壳</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:87%;background:#d1d5db"></div></div>
-            <span class="hot-num">20.6万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:55%;background:#b0b0b0"></div></div>
+            <span class="hot-num">149.5万</span>
           </div>
         </div>
       </div>
-      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%E5%86%85%E5%A8%B1%E7%94%B7%E6%98%8E%E6%98%9F%E4%BB%A3%E8%A8%80%E6%95%B0%E9%87%8F%E6%B1%87%E6%80%BB','_blank')">
+      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%23%E6%9B%9D%E7%9B%91%E7%8B%B1%E6%9D%A5%E7%9A%84%E5%A6%88%E5%A6%88%E6%92%A4%E6%A1%A3%23&t=152&Refer=top','_blank')">
         <div class="rank rank-accent">5</div>
         <div class="item-body">
-          <a class="item-title" href="https://s.weibo.com/weibo?q=%E5%86%85%E5%A8%B1%E7%94%B7%E6%98%8E%E6%98%9F%E4%BB%A3%E8%A8%80%E6%95%B0%E9%87%8F%E6%B1%87%E6%80%BB" target="_blank" rel="noopener">内娱男明星代言数量汇总</a>
+          <a class="item-title" href="https://s.weibo.com/weibo?q=%23%E6%9B%9D%E7%9B%91%E7%8B%B1%E6%9D%A5%E7%9A%84%E5%A6%88%E5%A6%88%E6%92%A4%E6%A1%A3%23&t=152&Refer=top" target="_blank" rel="noopener">曝监狱来的妈妈撤档</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:85%;background:#d1d5db"></div></div>
-            <span class="hot-num">20.1万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:35%;background:#b0b0b0"></div></div>
+            <span class="hot-num">93.7万</span>
           </div>
         </div>
       </div>
-      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%E7%A9%86%E7%A5%89%E4%B8%9E%E4%BA%AE%E7%9B%B8%E6%88%9B%E7%BA%B3%E4%B8%AD%E5%9B%BD%E9%A6%86','_blank')">
+      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%23%E9%BA%A6%E7%90%B3%E7%98%A6%E6%88%90%E5%94%90%E5%AB%A3%E4%BA%86%23&t=152&Refer=top','_blank')">
         <div class="rank rank-accent">6</div>
         <div class="item-body">
-          <a class="item-title" href="https://s.weibo.com/weibo?q=%E7%A9%86%E7%A5%89%E4%B8%9E%E4%BA%AE%E7%9B%B8%E6%88%9B%E7%BA%B3%E4%B8%AD%E5%9B%BD%E9%A6%86" target="_blank" rel="noopener">穆祉丞亮相戛纳中国馆</a>
+          <a class="item-title" href="https://s.weibo.com/weibo?q=%23%E9%BA%A6%E7%90%B3%E7%98%A6%E6%88%90%E5%94%90%E5%AB%A3%E4%BA%86%23&t=152&Refer=top" target="_blank" rel="noopener">麦琳瘦成唐嫣了</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:84%;background:#d1d5db"></div></div>
-            <span class="hot-num">19.9万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:34%;background:#b0b0b0"></div></div>
+            <span class="hot-num">90.7万</span>
           </div>
         </div>
       </div>
-      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%E5%BC%A0%E5%87%8C%E8%B5%AB%E6%91%A9%E7%BE%AF%E7%94%B7%E7%9A%84%E5%B0%8F%E5%BF%83%E6%9C%BA','_blank')">
+      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%E4%BD%95%E8%80%81%E5%B8%88%E4%B9%9F%E6%8E%A5%E5%8F%97%E4%B8%8D%E4%BA%86vip%E6%8A%A2%E5%85%88%E7%9C%8B&t=152&Refer=top','_blank')">
         <div class="rank rank-accent">7</div>
         <div class="item-body">
-          <a class="item-title" href="https://s.weibo.com/weibo?q=%E5%BC%A0%E5%87%8C%E8%B5%AB%E6%91%A9%E7%BE%AF%E7%94%B7%E7%9A%84%E5%B0%8F%E5%BF%83%E6%9C%BA" target="_blank" rel="noopener">张凌赫摩羯男的小心机</a>
+          <a class="item-title" href="https://s.weibo.com/weibo?q=%E4%BD%95%E8%80%81%E5%B8%88%E4%B9%9F%E6%8E%A5%E5%8F%97%E4%B8%8D%E4%BA%86vip%E6%8A%A2%E5%85%88%E7%9C%8B&t=152&Refer=top" target="_blank" rel="noopener">何老师也接受不了vip抢先看</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:83%;background:#d1d5db"></div></div>
-            <span class="hot-num">19.6万</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:31%;background:#b0b0b0"></div></div>
+            <span class="hot-num">83.5万</span>
           </div>
         </div>
       </div>
-      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%E6%81%B6%E6%84%8F%E8%AF%84%E5%88%86%E6%9D%A8%E7%B4%AB%E5%AE%B6%E4%B8%9A%E5%B7%B2%E8%BF%9D%E6%B3%95','_blank')">
+      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%E5%BC%A0%E5%85%83%E8%8B%B1%20%E8%B4%9D%E5%BE%AE%E5%BE%AE&t=152&Refer=top','_blank')">
         <div class="rank rank-accent">8</div>
         <div class="item-body">
-          <a class="item-title" href="https://s.weibo.com/weibo?q=%E6%81%B6%E6%84%8F%E8%AF%84%E5%88%86%E6%9D%A8%E7%B4%AB%E5%AE%B6%E4%B8%9A%E5%B7%B2%E8%BF%9D%E6%B3%95" target="_blank" rel="noopener">恶意评分杨紫家业已违法</a>
+          <a class="item-title" href="https://s.weibo.com/weibo?q=%E5%BC%A0%E5%85%83%E8%8B%B1%20%E8%B4%9D%E5%BE%AE%E5%BE%AE&t=152&Refer=top" target="_blank" rel="noopener">张元英 贝微微</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:72%;background:#d1d5db"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:25%;background:#b0b0b0"></div></div>
+            <span class="hot-num">67.2万</span>
+          </div>
+        </div>
+      </div>
+      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%23IU%E8%BE%B9%E4%BD%91%E9%94%A1%E5%8F%91%E6%96%87%E9%81%93%E6%AD%89%23&t=152&Refer=top','_blank')">
+        <div class="rank rank-accent">9</div>
+        <div class="item-body">
+          <a class="item-title" href="https://s.weibo.com/weibo?q=%23IU%E8%BE%B9%E4%BD%91%E9%94%A1%E5%8F%91%E6%96%87%E9%81%93%E6%AD%89%23&t=152&Refer=top" target="_blank" rel="noopener">IU边佑锡发文道歉</a>
+          <div class="item-foot">
+            <div class="bar-wrap"><div class="bar-fill" style="width:24%;background:#b0b0b0"></div></div>
+            <span class="hot-num">65.9万</span>
+          </div>
+        </div>
+      </div>
+      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%23%E6%9D%8E%E6%80%9D%E6%BD%BC%E5%B0%86%E6%88%90%E4%B8%BA00%E8%8A%B1%E4%B8%80%E7%95%AA%E7%A5%A8%E6%88%BF%E6%9C%80%E9%AB%98%23&t=152&Refer=top','_blank')">
+        <div class="rank rank-accent">10</div>
+        <div class="item-body">
+          <a class="item-title" href="https://s.weibo.com/weibo?q=%23%E6%9D%8E%E6%80%9D%E6%BD%BC%E5%B0%86%E6%88%90%E4%B8%BA00%E8%8A%B1%E4%B8%80%E7%95%AA%E7%A5%A8%E6%88%BF%E6%9C%80%E9%AB%98%23&t=152&Refer=top" target="_blank" rel="noopener">李思潼将成为00花一番票房最高</a>
+          <div class="item-foot">
+            <div class="bar-wrap"><div class="bar-fill" style="width:22%;background:#b0b0b0"></div></div>
+            <span class="hot-num">59.4万</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="board" id="wb-tech">
+    <div class="board-head">
+      <img class="logo" src="https://weibo.com/favicon.ico" alt="新浪微博" onerror="this.style.display='none'">
+      <span class="board-name">新浪微博</span>
+      <span class="badge" style="background:#E6162D;color:#fff">科技热搜</span>
+    </div>
+    <div class="list">
+      <div class="item" onclick="window.open('https://s.weibo.com/weibo?q=%E4%BB%8EiPhone%E6%8D%A2%E5%88%B0%E5%8D%8E%E4%B8%BA%E5%A4%A7%E9%98%94%E6%8A%98','_blank')">
+        <div class="rank rank-top">1</div>
+        <div class="item-body">
+          <a class="item-title" href="https://s.weibo.com/weibo?q=%E4%BB%8EiPhone%E6%8D%A2%E5%88%B0%E5%8D%8E%E4%B8%BA%E5%A4%A7%E9%98%94%E6%8A%98" target="_blank" rel="noopener">从iPhone换到华为大阔折</a>
+          <div class="item-foot">
+            <div class="bar-wrap"><div class="bar-fill" style="width:3%;background:#b0b0b0"></div></div>
             <span class="hot-num">16.9万</span>
+          </div>
+        </div>
+      </div>
+      <div class="item" onclick="window.open('https://www.ithome.com/0/951/995.htm','_blank')">
+        <div class="rank rank-top">2</div>
+        <div class="item-body">
+          <a class="item-title" href="https://www.ithome.com/0/951/995.htm" target="_blank" rel="noopener">酷比魔方预热 iPlay 70E 平板：11 英寸 1200P 90Hz 面板、紫光展锐 T7300 芯片</a>
+          <div class="item-foot">
+            <div class="bar-wrap"><div class="bar-fill" style="width:0%;background:#b0b0b0"></div></div>
+            <span class="hot-num"></span>
+          </div>
+        </div>
+      </div>
+      <div class="item" onclick="window.open('https://www.ithome.com/0/951/992.htm','_blank')">
+        <div class="rank rank-top">3</div>
+        <div class="item-body">
+          <a class="item-title" href="https://www.ithome.com/0/951/992.htm" target="_blank" rel="noopener">马斯克：今年 SpaceX 有望攻克可复用火箭技术，Neuralink 将助盲人重获视力</a>
+          <div class="item-foot">
+            <div class="bar-wrap"><div class="bar-fill" style="width:0%;background:#b0b0b0"></div></div>
+            <span class="hot-num"></span>
+          </div>
+        </div>
+      </div>
+      <div class="item" onclick="window.open('https://www.ithome.com/0/951/991.htm','_blank')">
+        <div class="rank rank-accent">4</div>
+        <div class="item-body">
+          <a class="item-title" href="https://www.ithome.com/0/951/991.htm" target="_blank" rel="noopener">豆包 App 上线博物馆讲解功能</a>
+          <div class="item-foot">
+            <div class="bar-wrap"><div class="bar-fill" style="width:0%;background:#b0b0b0"></div></div>
+            <span class="hot-num"></span>
+          </div>
+        </div>
+      </div>
+      <div class="item" onclick="window.open('https://www.ithome.com/0/951/978.htm','_blank')">
+        <div class="rank rank-accent">5</div>
+        <div class="item-body">
+          <a class="item-title" href="https://www.ithome.com/0/951/978.htm" target="_blank" rel="noopener">微软确认：Win11 将允许用户自定义 Copilot 按键功能</a>
+          <div class="item-foot">
+            <div class="bar-wrap"><div class="bar-fill" style="width:0%;background:#b0b0b0"></div></div>
+            <span class="hot-num"></span>
+          </div>
+        </div>
+      </div>
+      <div class="item" onclick="window.open('https://www.ithome.com/0/951/974.htm','_blank')">
+        <div class="rank rank-accent">6</div>
+        <div class="item-body">
+          <a class="item-title" href="https://www.ithome.com/0/951/974.htm" target="_blank" rel="noopener">硬核玩家逆向索尼 PS2 游戏机，利用原版芯片手工打造便携掌机</a>
+          <div class="item-foot">
+            <div class="bar-wrap"><div class="bar-fill" style="width:0%;background:#b0b0b0"></div></div>
+            <span class="hot-num"></span>
+          </div>
+        </div>
+      </div>
+      <div class="item" onclick="window.open('https://www.ithome.com/0/951/971.htm','_blank')">
+        <div class="rank rank-accent">7</div>
+        <div class="item-body">
+          <a class="item-title" href="https://www.ithome.com/0/951/971.htm" target="_blank" rel="noopener">OpenAI 为星际之门高薪招聘“社区安抚官”，旨在减少数据中心建设阻力</a>
+          <div class="item-foot">
+            <div class="bar-wrap"><div class="bar-fill" style="width:0%;background:#b0b0b0"></div></div>
+            <span class="hot-num"></span>
+          </div>
+        </div>
+      </div>
+      <div class="item" onclick="window.open('https://www.ithome.com/0/951/967.htm','_blank')">
+        <div class="rank rank-accent">8</div>
+        <div class="item-body">
+          <a class="item-title" href="https://www.ithome.com/0/951/967.htm" target="_blank" rel="noopener">中国首款全栈自研、前装量产的 Robotaxi：小鹏 GX 首台 Robotaxi 量产车下线，3000TOPS 算力全球最高</a>
+          <div class="item-foot">
+            <div class="bar-wrap"><div class="bar-fill" style="width:0%;background:#b0b0b0"></div></div>
+            <span class="hot-num"></span>
+          </div>
+        </div>
+      </div>
+      <div class="item" onclick="window.open('https://www.ithome.com/0/951/966.htm','_blank')">
+        <div class="rank rank-accent">9</div>
+        <div class="item-body">
+          <a class="item-title" href="https://www.ithome.com/0/951/966.htm" target="_blank" rel="noopener">【IT之家评测室】大疆扫地机器人 ROMO 2 体验：8.5cm 越障 +36000Pa 吸力，再把无人机技术“降维”到地面</a>
+          <div class="item-foot">
+            <div class="bar-wrap"><div class="bar-fill" style="width:0%;background:#b0b0b0"></div></div>
+            <span class="hot-num"></span>
+          </div>
+        </div>
+      </div>
+      <div class="item" onclick="window.open('https://www.baidu.com/s?wd=%E7%99%BE%E5%BA%A6Q1%E8%90%A5%E6%94%B6%E8%B6%85%E9%A2%84%E6%9C%9F++%E6%99%BA%E8%83%BD%E4%BA%91%E5%A2%9E%E9%80%9F79%25&sa=fyb_news&rsv_dl=fyb_news','_blank')">
+        <div class="rank rank-accent">10</div>
+        <div class="item-body">
+          <a class="item-title" href="https://www.baidu.com/s?wd=%E7%99%BE%E5%BA%A6Q1%E8%90%A5%E6%94%B6%E8%B6%85%E9%A2%84%E6%9C%9F++%E6%99%BA%E8%83%BD%E4%BA%91%E5%A2%9E%E9%80%9F79%25&sa=fyb_news&rsv_dl=fyb_news" target="_blank" rel="noopener">百度Q1营收超预期  智能云增速79%</a>
+          <div class="item-foot">
+            <div class="bar-wrap"><div class="bar-fill" style="width:100%;background:#b0b0b0"></div></div>
+            <span class="hot-num">599.85w</span>
           </div>
         </div>
       </div>
@@ -1107,8 +1150,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
   </div>
 </div>
 <div class="footer">数据来源: <a href="https://60s.viki.moe" target="_blank">60s API</a> · <a href="https://tophub.today" target="_blank">今日热榜</a> · 部署于 <a href="https://pages.github.com" target="_blank">GitHub Pages</a></div>
-<div class="back-top" id="backTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</div>
+<div class="back-top" id="backTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">&uarr;</div>
 <script>window.addEventListener('scroll',function(){document.getElementById('backTop').classList.toggle('show',window.scrollY>400)});</script>
-<script src="refresh.js"></script>
 </body>
 </html>
