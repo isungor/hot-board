@@ -8,7 +8,7 @@ const https = require('https');
 const fs = require('fs');
 
 const API_BASE = 'https://60s.viki.moe/v2';
-const AUTOHOME_API = 'https://news.app.autohome.com.cn/news_v10.0.0/news/newsranklistv2';
+const AUTOHOME_API = 'https://news.app.autohome.com.cn/news_v10.0.0/news/newshotrankh5list';
 const TIMEOUT = 15000;
 
 const AUTO_KEYWORDS = [
@@ -92,18 +92,26 @@ function fetchAutohome(limit = 10) {
       res.on('end', () => {
         try {
           const j = JSON.parse(data);
-          const hotranklist = (j && j.result) ? j.result.hotranklist : [];
-          for (const cat of hotranklist) {
-            const lst = cat.list || [];
-            if (!lst.length) continue;
-            const result = lst.slice(0, limit).map((item, i) => ({
-              rank: i + 1, title: item.title || '',
-              url: `https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=${item.bizid}`,
-              hot: '', hot_num: 0,
-            }));
-            return resolve(result);
-          }
-          resolve([]);
+          const list = (j && j.result) ? (j.result.list || []) : [];
+          const result = list.slice(0, limit).map((item, i) => {
+            const hotnum = item.hotnum || '';
+            let hotNum = 0;
+            if (hotnum) {
+              const h = hotnum.replace(/万|亿/g, '');
+              const hVal = parseFloat(h) || 0;
+              if (hotnum.includes('亿')) hotNum = hVal * 100000000;
+              else if (hotnum.includes('万')) hotNum = hVal * 10000;
+              else hotNum = hVal;
+            }
+            return {
+              rank: item.hotrank || i + 1,
+              title: item.hottitle || '',
+              url: `https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id=${item.objectid}`,
+              hot: hotnum,
+              hot_num: hotNum,
+            };
+          });
+          resolve(result);
         } catch (e) { reject(e); }
       });
     });
