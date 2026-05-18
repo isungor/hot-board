@@ -432,7 +432,7 @@ def generate_html(boards_data):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>全网热榜看板</title>
+<title>YU-全网热点看板</title>
 <style>
 :root {{
   --bg: #f0f2f5;
@@ -676,7 +676,7 @@ body {{
 <body>
 
 <div class="header">
-  <h1>全网热榜看板</h1>
+  <h1>YU-全网热点看板</h1>
   <div class="sub">每日 10:30 &amp; 15:00 自动更新 <span>{update_time}</span></div>
 </div>
 
@@ -829,7 +829,7 @@ def main():
             "logo": "https://www.autohome.com.cn/favicon.ico",
             "name": "汽车之家",
             "badge": "热榜",
-            "color": "#FF6600",
+            "color": "#3b82f6",
             "items": autohome_hot,
         },
         {
@@ -837,7 +837,7 @@ def main():
             "logo": "https://icon.horse/icon/www.dongchedi.com",
             "name": "懂车帝",
             "badge": "热点榜",
-            "color": "#00b894",
+            "color": "#eab308",
             "items": dcd_hot,
         },
         {
