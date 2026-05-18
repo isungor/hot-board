@@ -5,7 +5,7 @@
 数据源:
   60s API: dongchedi / toutiao / douyin / weibo / it-news / baidu/hot
   汽车之家: newshotrankh5list (H5 今日实时热点榜)
-  tophub:  微博文娱榜 (带重试 + fallback)
+  tophub:  微博文娱榜 / 新浪汽车热搜榜 (带重试 + fallback)
 """
 
 import json
@@ -20,6 +20,7 @@ from datetime import datetime, timezone, timedelta
 API_BASE = "https://60s.viki.moe/v2"
 AUTOHOME_API = "https://news.app.autohome.com.cn/news_v10.0.0/news/newshotrankh5list"
 TOPHUB_ENT_NODE = "/n/3QeLwJEd7k"  # 微博文娱榜
+TOPHUB_AUTO_NODE = "/n/aEdZbrkdrO"  # 新浪汽车热搜榜
 TOPHUB_BASE = "https://tophub.today"
 TIMEOUT = 15  # 秒
 
@@ -745,6 +746,11 @@ def main():
     tophub_ent = fetch_tophub(TOPHUB_ENT_NODE, 2)
     print(f"  tophub 文娱: {len(tophub_ent)} 条")
 
+    # 抓取 tophub 新浪汽车热搜榜（带重试）
+    print("[抓取] tophub 新浪汽车热搜榜...")
+    tophub_auto = fetch_tophub(TOPHUB_AUTO_NODE, 2)
+    print(f"  tophub 汽车: {len(tophub_auto)} 条")
+
     # 2. 数据处理
     print("\n[处理] 组装看板数据...")
 
@@ -756,24 +762,30 @@ def main():
     dcd_hot = normalize_dcd(dcd_raw, 10)
     print(f"  懂车帝热点榜: {len(dcd_hot)} 条")
 
-    # 微博汽车热榜：多源关键词匹配 + 汽车之家补充
-    auto_sources = [
-        {"items": weibo_raw, "normalizer": normalize_weibo, "label": "微博"},
-        {"items": toutiao_raw, "normalizer": normalize_toutiao, "label": "头条"},
-        {"items": baidu_raw, "normalizer": normalize_baidu, "label": "百度"},
-        {"items": douyin_raw, "normalizer": normalize_douyin, "label": "抖音"},
-        {"items": itnews_raw, "normalizer": normalize_itnews, "label": "IT资讯"},
-    ]
-    weibo_auto = multi_source_filter(auto_sources, WEIBO_AUTO_KEYWORDS, 10)
-    # 多源不够10条时，用汽车之家热榜补充（去重）
-    if len(weibo_auto) < 10 and ah_raw:
-        exist_titles = {item["title"] for item in weibo_auto}
-        ah_supplement = normalize_autohome(ah_raw, 10)
-        ah_supplement = [item for item in ah_supplement if item["title"] not in exist_titles]
-        weibo_auto = (weibo_auto + ah_supplement)[:10]
-        for i, item in enumerate(weibo_auto):
-            item["rank"] = i + 1
-    print(f"  微博汽车热榜: {len(weibo_auto)} 条 (多源+汽车之家补充)")
+    # 微博汽车热榜：tophub 新浪汽车热搜为主，fallback 多源关键词 + 汽车之家补充
+    if len(tophub_auto) >= 5:
+        weibo_auto = normalize_tophub(tophub_auto, 10)
+        auto_source = "tophub"
+    else:
+        print("  tophub 汽车数据不足，fallback 到多源关键词...")
+        auto_sources = [
+            {"items": weibo_raw, "normalizer": normalize_weibo, "label": "微博"},
+            {"items": toutiao_raw, "normalizer": normalize_toutiao, "label": "头条"},
+            {"items": baidu_raw, "normalizer": normalize_baidu, "label": "百度"},
+            {"items": douyin_raw, "normalizer": normalize_douyin, "label": "抖音"},
+            {"items": itnews_raw, "normalizer": normalize_itnews, "label": "IT资讯"},
+        ]
+        weibo_auto = multi_source_filter(auto_sources, WEIBO_AUTO_KEYWORDS, 10)
+        # 多源不够10条时，用汽车之家热榜补充（去重）
+        if len(weibo_auto) < 10 and ah_raw:
+            exist_titles = {item["title"] for item in weibo_auto}
+            ah_supplement = normalize_autohome(ah_raw, 10)
+            ah_supplement = [item for item in ah_supplement if item["title"] not in exist_titles]
+            weibo_auto = (weibo_auto + ah_supplement)[:10]
+            for i, item in enumerate(weibo_auto):
+                item["rank"] = i + 1
+        auto_source = "多源+汽车之家补充"
+    print(f"  微博汽车热榜: {len(weibo_auto)} 条 ({auto_source})")
 
     # 今日头条热榜 TOP20
     toutiao_hot = normalize_toutiao(toutiao_raw, 20)
