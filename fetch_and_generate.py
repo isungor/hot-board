@@ -21,6 +21,7 @@ API_BASE = "https://60s.viki.moe/v2"
 AUTOHOME_API = "https://news.app.autohome.com.cn/news_v10.0.0/news/newshotrankh5list"
 TOPHUB_ENT_NODE = "/n/3QeLwJEd7k"  # 微博文娱榜
 TOPHUB_AUTO_NODE = "/n/aEdZbrkdrO"  # 新浪汽车热搜榜
+TOPHUB_DCD_NODE = "/n/7GdaA8kdQy"  # 懂车帝热搜榜
 TOPHUB_BASE = "https://tophub.today"
 TIMEOUT = 15  # 秒
 
@@ -397,7 +398,7 @@ def build_board_html(board_id, logo_url, platform_name, badge_text, accent_color
         <div class="item-body">
           <a class="item-title" href="{url}" target="_blank" rel="noopener">{title_text}</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:{pct}%;background:#555"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:{pct}%;background:#d1d5db"></div></div>
             <span class="hot-num">{hot}</span>
           </div>
         </div>
@@ -741,15 +742,25 @@ def main():
     print(f"  汽车之家: {len(ah_raw)} | 懂车帝: {len(dcd_raw)} | 头条: {len(toutiao_raw)} | 抖音: {len(douyin_raw)}")
     print(f"  微博: {len(weibo_raw)} | IT资讯: {len(itnews_raw)} | 百度热搜: {len(baidu_raw)}")
 
-    # 抓取 tophub 微博文娱榜（带重试）
-    print("[抓取] tophub 微博文娱榜...")
-    tophub_ent = fetch_tophub(TOPHUB_ENT_NODE, 2)
-    print(f"  tophub 文娱: {len(tophub_ent)} 条")
-
-    # 抓取 tophub 新浪汽车热搜榜（带重试）
-    print("[抓取] tophub 新浪汽车热搜榜...")
-    tophub_auto = fetch_tophub(TOPHUB_AUTO_NODE, 2)
-    print(f"  tophub 汽车: {len(tophub_auto)} 条")
+    # 并行抓取 tophub 三个榜单（带重试）
+    print("[抓取] tophub 三个榜单...")
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+        th_futures = {
+            executor.submit(fetch_tophub, TOPHUB_ENT_NODE, 2): "ent",
+            executor.submit(fetch_tophub, TOPHUB_AUTO_NODE, 2): "auto",
+            executor.submit(fetch_tophub, TOPHUB_DCD_NODE, 2): "dcd",
+        }
+        th_results = {}
+        for future in concurrent.futures.as_completed(th_futures):
+            key = th_futures[future]
+            try:
+                th_results[key] = future.result()
+            except Exception:
+                th_results[key] = []
+    tophub_ent = th_results.get("ent", [])
+    tophub_auto = th_results.get("auto", [])
+    tophub_dcd = th_results.get("dcd", [])
+    print(f"  tophub 文娱: {len(tophub_ent)} | 汽车: {len(tophub_auto)} | 懂车帝: {len(tophub_dcd)} 条")
 
     # 2. 数据处理
     print("\n[处理] 组装看板数据...")
@@ -758,9 +769,15 @@ def main():
     autohome_hot = normalize_autohome(ah_raw, 10)
     print(f"  汽车之家热榜: {len(autohome_hot)} 条")
 
-    # 懂车帝热点榜 TOP10
-    dcd_hot = normalize_dcd(dcd_raw, 10)
-    print(f"  懂车帝热点榜: {len(dcd_hot)} 条")
+    # 懂车帝热点榜 TOP10：tophub 优先（带可跳转URL），fallback 到 60s API
+    if len(tophub_dcd) >= 5:
+        dcd_hot = normalize_tophub(tophub_dcd, 10)
+        dcd_source = "tophub"
+    else:
+        print("  tophub 懂车帝数据不足，fallback 到 60s API...")
+        dcd_hot = normalize_dcd(dcd_raw, 10)
+        dcd_source = "60s API"
+    print(f"  懂车帝热点榜: {len(dcd_hot)} 条 ({dcd_source})")
 
     # 微博汽车热榜：tophub 新浪汽车热搜为主，fallback 多源关键词 + 汽车之家补充
     if len(tophub_auto) >= 5:
