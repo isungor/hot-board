@@ -379,18 +379,23 @@ def format_hot(val):
 
 def build_board_html(board_id, logo_url, platform_name, badge_text, accent_color, items):
     max_hot = max((item.get("hot_num", 0) for item in items), default=1) or 1
+    has_any_hot = any(item.get("hot_num", 0) > 0 for item in items)
 
     if not items:
         items_html = '      <div class="empty-tip">当前时段暂无相关话题</div>\n'
     else:
         items_html = ""
-        for item in items:
+        for idx, item in enumerate(items):
             rank = item.get("rank", 0)
             title_text = item.get("title", "").replace("<", "&lt;").replace(">", "&gt;")
             url = item.get("url", "#").replace("'", "&#39;")
             hot = format_hot(item.get("hot", 0))
             hot_num = item.get("hot_num", 0)
-            pct = round(hot_num / max_hot * 100) if max_hot > 0 else 0
+            if has_any_hot:
+                pct = round(hot_num / max_hot * 100) if max_hot > 0 else 0
+            else:
+                # 无热度值时用排名反向生成相对热度（第1名=100%）
+                pct = round((len(items) - idx) / len(items) * 100)
 
             rank_cls = "rank-top" if rank <= 3 else ("rank-accent" if rank <= 10 else "rank-normal")
 
