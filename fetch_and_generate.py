@@ -22,6 +22,7 @@ AUTOHOME_API = "https://news.app.autohome.com.cn/news_v10.0.0/news/newshotrankh5
 TOPHUB_ENT_NODE = "/n/3QeLwJEd7k"  # 微博文娱榜
 TOPHUB_AUTO_NODE = "/n/aEdZbrkdrO"  # 新浪汽车热搜榜
 TOPHUB_DCD_NODE = "/n/7GdaA8kdQy"  # 懂车帝热搜榜
+TOPHUB_TT_AUTO_NODE = "/n/Q0orLpDd8B"  # 今日头条汽车热榜
 TOPHUB_BASE = "https://tophub.today"
 TIMEOUT = 15  # 秒
 
@@ -736,7 +737,7 @@ def main():
 
     def fetch_all():
         results = {}
-        with concurrent.futures.ThreadPoolExecutor(max_workers=7) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
             futures = {
                 executor.submit(fetch_autohome, 10): "autohome",
                 executor.submit(fetch_json, f"{API_BASE}/dongchedi"): "dcd",
@@ -744,7 +745,6 @@ def main():
                 executor.submit(fetch_json, f"{API_BASE}/douyin"): "douyin",
                 executor.submit(fetch_json, f"{API_BASE}/weibo"): "weibo",
                 executor.submit(fetch_json, f"{API_BASE}/it-news"): "itnews",
-                executor.submit(fetch_json, f"{API_BASE}/baidu/hot"): "baidu",
             }
             for future in concurrent.futures.as_completed(futures):
                 key = futures[future]
@@ -763,17 +763,17 @@ def main():
     douyin_raw = data.get("douyin", [])
     weibo_raw = data.get("weibo", [])
     itnews_raw = data.get("itnews", [])
-    baidu_raw = data.get("baidu", [])
     print(f"  汽车之家: {len(ah_raw)} | 懂车帝: {len(dcd_raw)} | 头条: {len(toutiao_raw)} | 抖音: {len(douyin_raw)}")
-    print(f"  微博: {len(weibo_raw)} | IT资讯: {len(itnews_raw)} | 百度热搜: {len(baidu_raw)}")
+    print(f"  微博: {len(weibo_raw)} | IT资讯: {len(itnews_raw)}")
 
-    # 并行抓取 tophub 三个榜单（带重试）
-    print("[抓取] tophub 三个榜单...")
-    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+    # 并行抓取 tophub 四个榜单（带重试）
+    print("[抓取] tophub 四个榜单...")
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
         th_futures = {
             executor.submit(fetch_tophub, TOPHUB_ENT_NODE, 2): "ent",
             executor.submit(fetch_tophub, TOPHUB_AUTO_NODE, 2): "auto",
             executor.submit(fetch_tophub, TOPHUB_DCD_NODE, 2): "dcd",
+            executor.submit(fetch_tophub, TOPHUB_TT_AUTO_NODE, 2): "tt_auto",
         }
         th_results = {}
         for future in concurrent.futures.as_completed(th_futures):
@@ -785,7 +785,8 @@ def main():
     tophub_ent = th_results.get("ent", [])
     tophub_auto = th_results.get("auto", [])
     tophub_dcd = th_results.get("dcd", [])
-    print(f"  tophub 文娱: {len(tophub_ent)} | 汽车: {len(tophub_auto)} | 懂车帝: {len(tophub_dcd)} 条")
+    tophub_tt_auto = th_results.get("tt_auto", [])
+    print(f"  tophub 文娱: {len(tophub_ent)} | 汽车: {len(tophub_auto)} | 懂车帝: {len(tophub_dcd)} | 头条汽车: {len(tophub_tt_auto)} 条")
 
     # 2. 数据处理
     print("\n[处理] 组装看板数据...")
@@ -813,7 +814,6 @@ def main():
         auto_sources = [
             {"items": weibo_raw, "normalizer": normalize_weibo, "label": "微博"},
             {"items": toutiao_raw, "normalizer": normalize_toutiao, "label": "头条"},
-            {"items": baidu_raw, "normalizer": normalize_baidu, "label": "百度"},
             {"items": douyin_raw, "normalizer": normalize_douyin, "label": "抖音"},
             {"items": itnews_raw, "normalizer": normalize_itnews, "label": "IT资讯"},
         ]
@@ -828,6 +828,18 @@ def main():
                 item["rank"] = i + 1
         auto_source = "多源+汽车之家补充"
     print(f"  微博汽车热榜: {len(weibo_auto)} 条 ({auto_source})")
+
+    # 今日头条汽车热榜 TOP10：tophub 头条汽车榜
+    if len(tophub_tt_auto) >= 5:
+        tt_auto = normalize_tophub(tophub_tt_auto, 10)
+        tt_auto_source = "tophub"
+    else:
+        tt_auto = multi_source_filter([
+            {"items": toutiao_raw, "normalizer": normalize_toutiao, "label": "头条"},
+            {"items": weibo_raw, "normalizer": normalize_weibo, "label": "微博"},
+        ], WEIBO_AUTO_KEYWORDS, 10)
+        tt_auto_source = "多源关键词"
+    print(f"  今日头条汽车热榜: {len(tt_auto)} 条 ({tt_auto_source})")
 
     # 今日头条热榜 TOP20
     toutiao_hot = normalize_toutiao(toutiao_raw, 20)
@@ -847,21 +859,10 @@ def main():
         ent_sources = [
             {"items": weibo_raw, "normalizer": normalize_weibo, "label": "微博"},
             {"items": toutiao_raw, "normalizer": normalize_toutiao, "label": "头条"},
-            {"items": baidu_raw, "normalizer": normalize_baidu, "label": "百度"},
         ]
         weibo_ent = multi_source_filter(ent_sources, ENT_KEYWORDS, 10)
         ent_source = "多源关键词"
     print(f"  微博文娱: {len(weibo_ent)} 条 ({ent_source})")
-
-    # 微博科技 TOP10: 多源关键词匹配
-    tech_sources = [
-        {"items": weibo_raw, "normalizer": normalize_weibo, "label": "微博"},
-        {"items": toutiao_raw, "normalizer": normalize_toutiao, "label": "头条"},
-        {"items": baidu_raw, "normalizer": normalize_baidu, "label": "百度"},
-        {"items": itnews_raw, "normalizer": normalize_itnews, "label": "IT资讯"},
-    ]
-    weibo_tech = multi_source_filter(tech_sources, TECH_KEYWORDS, 10)
-    print(f"  微博科技: {len(weibo_tech)} 条 (多源关键词匹配)")
 
     # 3. 组装看板
     boards = [
@@ -891,6 +892,15 @@ def main():
             "items": weibo_auto,
         },
         {
+            "id": "tt-auto",
+            "logo": "https://www.toutiao.com/favicon.ico",
+            "name": "今日头条",
+            "badge": "汽车热榜",
+            "color": "#F85959",
+            "items": tt_auto,
+        },
+        # 第二行
+        {
             "id": "tt-hot",
             "logo": "https://www.toutiao.com/favicon.ico",
             "name": "今日头条",
@@ -898,7 +908,6 @@ def main():
             "color": "#ff4757",
             "items": toutiao_hot,
         },
-        # 第二行
         {
             "id": "dy-hot",
             "logo": "https://www.douyin.com/favicon.ico",
@@ -922,14 +931,6 @@ def main():
             "badge": "文娱热搜",
             "color": "#e84393",
             "items": weibo_ent,
-        },
-        {
-            "id": "wb-tech",
-            "logo": "https://weibo.com/favicon.ico",
-            "name": "新浪微博",
-            "badge": "科技热搜",
-            "color": "#6c5ce7",
-            "items": weibo_tech,
         },
     ]
 
