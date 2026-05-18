@@ -4,7 +4,7 @@
  * 用于本地测试；GitHub Actions 使用 Python 版 (fetch_and_generate.py)
  *
  * 数据源:
- *   60s API: dongchedi / toutiao / douyin / weibo / it-news / baidu/hot
+ *   60s API: dongchedi / toutiao / douyin / weibo / it-news
  *   汽车之家: newshotrankh5list (H5 今日实时热点榜)
  *   tophub:  微博文娱榜 / 新浪汽车热搜榜 (带重试 + fallback)
  */
@@ -343,11 +343,16 @@ function formatHot(val) {
 
 function buildBoardHTML(id, logo, name, badge, color, items) {
   const maxHot = items.length > 0 ? Math.max(...items.map(i => i.hot_num || 0), 1) : 1;
+  const hasAnyHot = items.some(i => (i.hot_num || 0) > 0);
+  // 如果没有任何热度值，用排名反向生成相对热度（第1名=100%）
+  if (!hasAnyHot && items.length > 1) {
+    items.forEach((item, idx) => { item._relPct = Math.round((items.length - idx) / items.length * 100); });
+  }
   const itemsHTML = items.length === 0
     ? `      <div class="empty-tip">当前时段暂无相关话题</div>\n`
     : items.map(item => {
     const { rank, title: t, url, hot, hot_num } = item;
-    const pct = Math.round((hot_num || 0) / maxHot * 100);
+    const pct = hasAnyHot ? Math.round((hot_num || 0) / maxHot * 100) : (item._relPct || 0);
     const rc = rank <= 3 ? 'rank-top' : rank <= 10 ? 'rank-accent' : 'rank-normal';
     const safeUrl = (url || '#').replace(/'/g, '&#39;');
     const safeTitle = t.replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -500,7 +505,6 @@ async function main() {
     const autoSources = [
       { items: weibo, normalizer: normalizeWeibo, label: '微博' },
       { items: toutiao, normalizer: normalizeToutiao, label: '头条' },
-      { items: baidu, normalizer: normalizeBaidu, label: '百度' },
       { items: douyin, normalizer: normalizeDouyin, label: '抖音' },
       { items: itnews, normalizer: normalizeItNews, label: 'IT资讯' },
     ];
@@ -548,7 +552,6 @@ async function main() {
     const entSources = [
       { items: weibo, normalizer: normalizeWeibo, label: '微博' },
       { items: toutiao, normalizer: normalizeToutiao, label: '头条' },
-      { items: baidu, normalizer: normalizeBaidu, label: '百度' },
     ];
     wbEnt = multiSourceFilter(entSources, ENT_KW, 10);
     entSource = '多源关键词';
