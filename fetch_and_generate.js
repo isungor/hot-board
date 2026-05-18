@@ -16,6 +16,7 @@ const API_BASE = 'https://60s.viki.moe/v2';
 const AUTOHOME_API = 'https://news.app.autohome.com.cn/news_v10.0.0/news/newshotrankh5list';
 const TOPHUB_ENT_NODE = '/n/3QeLwJEd7k';  // 微博文娱榜
 const TOPHUB_AUTO_NODE = '/n/aEdZbrkdrO'; // 新浪汽车热搜榜
+const TOPHUB_DCD_NODE = '/n/7GdaA8kdQy';  // 懂车帝热搜榜
 const TOPHUB_BASE = 'https://tophub.today';
 const TIMEOUT = 15000;
 
@@ -354,7 +355,7 @@ function buildBoardHTML(id, logo, name, badge, color, items) {
         <div class="item-body">
           <a class="item-title" href="${safeUrl}" target="_blank" rel="noopener">${safeTitle}</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:#555"></div></div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:#d1d5db"></div></div>
             <span class="hot-num">${formatHot(hot)}</span>
           </div>
         </div>
@@ -454,15 +455,14 @@ async function main() {
   console.log(`  汽车之家: ${ahHot.length} | 懂车帝: ${dcd.length} | 头条: ${toutiao.length} | 抖音: ${douyin.length}`);
   console.log(`  微博: ${weibo.length} | IT资讯: ${itnews.length} | 百度热搜: ${baidu.length}`);
 
-  // 抓取 tophub 微博文娱榜（带重试）
-  console.log('[抓取] tophub 微博文娱榜...');
-  const tophubEnt = await fetchTopHub(TOPHUB_ENT_NODE, 2);
-  console.log(`  tophub 文娱: ${tophubEnt.length} 条`);
-
-  // 抓取 tophub 新浪汽车热搜榜（带重试）
-  console.log('[抓取] tophub 新浪汽车热搜榜...');
-  const tophubAuto = await fetchTopHub(TOPHUB_AUTO_NODE, 2);
-  console.log(`  tophub 汽车: ${tophubAuto.length} 条`);
+  // 并行抓取 tophub 三个榜单（带重试）
+  console.log('[抓取] tophub 三个榜单...');
+  const [tophubEnt, tophubAuto, tophubDcd] = await Promise.all([
+    fetchTopHub(TOPHUB_ENT_NODE, 2),
+    fetchTopHub(TOPHUB_AUTO_NODE, 2),
+    fetchTopHub(TOPHUB_DCD_NODE, 2),
+  ]);
+  console.log(`  tophub 文娱: ${tophubEnt.length} | 汽车: ${tophubAuto.length} | 懂车帝: ${tophubDcd.length} 条`);
 
   // ===== 数据处理 =====
   console.log('\n[处理] 组装看板数据...');
@@ -471,9 +471,17 @@ async function main() {
   const autohomeHot = normalizeAutohome(ahHot, 10);
   console.log(`  汽车之家热榜: ${autohomeHot.length} 条`);
 
-  // 懂车帝热点榜 TOP10
-  const dcdHot = normalizeDcd(dcd, 10);
-  console.log(`  懂车帝热点榜: ${dcdHot.length} 条`);
+  // 懂车帝热点榜 TOP10：tophub 优先（带可跳转URL），fallback 到 60s API
+  let dcdHot, dcdSource;
+  if (tophubDcd.length >= 5) {
+    dcdHot = normalizeTopHub(tophubDcd, 10);
+    dcdSource = 'tophub';
+  } else {
+    console.log('  tophub 懂车帝数据不足，fallback 到 60s API...');
+    dcdHot = normalizeDcd(dcd, 10);
+    dcdSource = '60s API';
+  }
+  console.log(`  懂车帝热点榜: ${dcdHot.length} 条 (${dcdSource})`);
 
   // 微博汽车热榜：tophub 新浪汽车热搜为主，fallback 多源关键词 + 汽车之家补充
   let wbAuto, autoSource;
