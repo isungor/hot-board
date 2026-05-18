@@ -94,9 +94,10 @@ function fetchJSON(url) {
   });
 }
 
+// ─── 数据归一化 ────────────────────────────────────
 // ─── Tophub HTML 抓取 ─────────────────────────────
 function fetchTophubHTML(url) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const req = require('https').get(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
@@ -109,18 +110,20 @@ function fetchTophubHTML(url) {
       let data = '';
       res.on('data', c => data += c);
       res.on('end', () => {
-        // 解析 table 中的热搜条目
         const rows = [];
-        const re = /<tr>[sS]*?<td align="center">(d+).</td>[sS]*?<a href="([^"]+)"[^>]*>([^<]+)</a>[sS]*?<td class="ws">([^<]+)</td>[sS]*?</tr>/g;
+        // 用 new RegExp 避免反斜杠被 shell 吞掉
+        const trRe = new RegExp(
+          '<tr>[\s\S]*?<td align="center">(\d+)\.<\/td>' +
+          '[\s\S]*?<a href="([^"]+)"[^>]*>([^<]+)<\/a>' +
+          '[\s\S]*?<td class="ws">([^<]+)<\/td>' +
+          '[\s\S]*?<\/tr>',
+          'g'
+        );
         let m;
-        while ((m = re.exec(data)) !== null) {
-          rows.push({
-            rank: parseInt(m[1]),
-            url: m[2],
-            title: m[3].trim(),
-            hot: m[4].trim(),
-            hot_num: parseFloat(m[4]) * (m[4].includes('万') ? 10000 : 1) || 0,
-          });
+        while ((m = trRe.exec(data)) !== null) {
+          const hotStr = m[4].trim();
+          const hotNum = parseFloat(hotStr) * (hotStr.includes('万') ? 10000 : 1) || 0;
+          rows.push({ rank: parseInt(m[1]), url: m[2], title: m[3].trim(), hot: hotStr, hot_num: hotNum });
         }
         resolve(rows);
       });
@@ -130,7 +133,6 @@ function fetchTophubHTML(url) {
   });
 }
 
-// ─── 数据归一化 ────────────────────────────────────
 function normalizeDcd(items, limit = 10) {
   return items.slice(0, limit).map((d, i) => ({
     rank: d.rank || i + 1, title: d.title || '', url: d.url || '',
