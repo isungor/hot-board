@@ -490,6 +490,27 @@ body {{
   font-size: 12px;
   margin-left: 6px;
 }}
+.refresh-btn {{
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(102,126,234,0.1);
+  color: #667eea;
+  border: 1px solid rgba(102,126,234,0.15);
+  padding: 2px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-left: 6px;
+  font-family: inherit;
+}}
+.refresh-btn:hover {{ background: rgba(102,126,234,0.2); border-color: rgba(102,126,234,0.3); }}
+.refresh-btn.loading {{ opacity: 0.6; pointer-events: none; }}
+@keyframes spin-anim {{ from {{ transform: rotate(0deg); }} to {{ transform: rotate(360deg); }} }}
+.refresh-btn.loading .spin-icon {{ animation: spin-anim 1s linear infinite; display: inline-block; }}
+}}
 .boards {{
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -678,7 +699,10 @@ body {{
 
 <div class="header">
   <h1>YU-全网热点看板</h1>
-  <div class="sub">每日 10:30 &amp; 15:00 自动更新 <span>{update_time}</span></div>
+  <div class="sub">
+    <span id="clock">{update_time}</span>
+    <button class="refresh-btn" id="refreshBtn" onclick="refreshAll()"><span class="spin-icon">⟳</span> 刷新</button>
+  </div>
 </div>
 
 <div class="boards">
@@ -696,6 +720,7 @@ window.addEventListener('scroll',function(){{
   document.getElementById('backTop').classList.toggle('show',window.scrollY>400);
 }});
 </script>
+<script src="refresh.js"></script>
 </body>
 </html>"""
 
