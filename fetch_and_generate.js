@@ -2,6 +2,11 @@
 /**
  * 全网热榜看板 - 数据抓取 & HTML 生成脚本 (Node.js版)
  * 用于本地测试；GitHub Actions 使用 Python 版 (fetch_and_generate.py)
+ *
+ * 数据源:
+ *   60s API: dongchedi / toutiao / douyin / weibo / it-news / baidu/hot
+ *   汽车之家: newshotrankh5list (H5 今日实时热点榜)
+ *   tophub:  微博文娱榜 (带重试 + fallback)
  */
 
 const https = require('https');
@@ -9,13 +14,11 @@ const fs = require('fs');
 
 const API_BASE = 'https://60s.viki.moe/v2';
 const AUTOHOME_API = 'https://news.app.autohome.com.cn/news_v10.0.0/news/newshotrankh5list';
+const TOPHUB_ENT_NODE = '/n/3QeLwJEd7k';  // 微博文娱榜
+const TOPHUB_BASE = 'https://tophub.today';
 const TIMEOUT = 15000;
 
-const AUTO_KEYWORDS = [
-  '车','新能源','比亚迪','特斯拉','丰田','本田','宝马','奔驰','奥迪','蔚来','理想','小鹏','吉利','长安','大众','福特',
-  '保时捷','华为','小米汽车','小米SU','乐道','方程豹','自动驾驶','充电','续航','混动','纯电','发动机','变速箱',
-  '汽车','轿车','SUV','MPV','销量','召回','碰撞','油价','充电桩','路测','试驾','上市','首发','亮相'
-];
+// ========== 关键词 ==========
 
 const WEIBO_AUTO_KW = [
   // 汽车品牌（精准匹配）
@@ -31,7 +34,17 @@ const WEIBO_AUTO_KW = [
   '燃油车','电动车','电车','越野车','摩托车','赛车',
   '车企','造车','新势力','网约车','车险','驾考',
 ];
-const ENT_KW = ['文娱','影视','综艺','明星','音乐','电影','电视剧','演出','娱乐','浪姐','歌手','乘风','芒果','选秀','演唱会','票房','热巴','杨幂','刘诗诗','张柏芝','白鹿','迪丽热巴','王力宏','名侦探柯南','何猷君','奚梦瑶','方媛','李纯','徐志胜','张嘉益','痞幼','沈腾','孙颖莎','柳智敏','Faker','李乃文','梅婷','黄圣依','金鹰奖'];
+const ENT_KW = [
+  '文娱','影视','综艺','明星','音乐','电影','电视剧','演出','娱乐',
+  '浪姐','歌手','乘风','芒果','选秀','演唱会','票房',
+  '热巴','杨幂','刘诗诗','张柏芝','白鹿','迪丽热巴','王力宏','柯南',
+  '何猷君','奚梦瑶','方媛','李纯','徐志胜','张嘉益','痞幼','沈腾',
+  '孙颖莎','柳智敏','Faker','李乃文','梅婷','黄圣依','金鹰奖',
+  '归鸾','家业','藏海传','张凌赫','杨洋','杨紫','虞书欣',
+  '龚俊','成毅','王一博','肖战','王俊凯','易烊千玺',
+  '中餐厅','奔跑吧','披荆斩棘','演员请就位',
+  '戛纳','金鸡','华表','百花',
+];
 const TECH_KW = [
   // AI / 大模型
   '英伟达','NVIDIA','OpenAI','ChatGPT','GPT','大模型','算力','人工智能','AI大模型',
@@ -54,11 +67,15 @@ const TECH_KW = [
   '苹果手机','智能手机','折叠屏','卫星通信','开源','开发者',
 ];
 
+// ========== 工具函数 ==========
+
 function nowBJ() { return new Date(Date.now() + 8 * 3600 * 1000); }
 function formatBJ(d) {
   const dt = new Date(d);
   return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth()+1).padStart(2,'0')}-${String(dt.getUTCDate()).padStart(2,'0')} ${String(dt.getUTCHours()).padStart(2,'0')}:${String(dt.getUTCMinutes()).padStart(2,'0')}`;
 }
+
+// ========== 数据抓取 ==========
 
 function fetchJSON(url) {
   return new Promise((resolve, reject) => {
@@ -120,6 +137,98 @@ function fetchAutohome(limit = 10) {
   });
 }
 
+/**
+ * 抓取 tophub 页面并解析条目（带重试）
+ * HTML 结构: <tr><td align="center">{rank}.</td><td><a href="{url}">{title}</a></td><td class="ws">{heat}</td>...
+ * @param {string} nodePath - tophub 节点路径如 /n/3QeLwJEd7k
+ * @param {number} retries - 重试次数
+ * @returns {Promise<Array>} [{rank, title, url, hot, hot_num}]
+ */
+function fetchTopHub(nodePath, retries = 2) {
+  const url = `${TOPHUB_BASE}${nodePath}`;
+  const browserHeaders = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+  };
+
+  function attempt(tryCount) {
+    return new Promise((resolve) => {
+      const req = https.get(url, { headers: browserHeaders, timeout: TIMEOUT }, res => {
+        // tophub 可能返回 503
+        if (res.statusCode === 503) {
+          if (tryCount < retries) {
+            setTimeout(() => attempt(tryCount + 1).then(resolve), 1000);
+            return;
+          }
+          resolve([]);
+          return;
+        }
+        let data = '';
+        res.on('data', c => data += c);
+        res.on('end', () => {
+          try {
+            const items = parseTopHubHTML(data);
+            if (items.length > 0 || tryCount >= retries) {
+              resolve(items);
+            } else {
+              setTimeout(() => attempt(tryCount + 1).then(resolve), 1000);
+            }
+          } catch (e) {
+            if (tryCount < retries) {
+              setTimeout(() => attempt(tryCount + 1).then(resolve), 1000);
+            } else {
+              resolve([]);
+            }
+          }
+        });
+      });
+      req.on('error', () => {
+        if (tryCount < retries) {
+          setTimeout(() => attempt(tryCount + 1).then(resolve), 1000);
+        } else {
+          resolve([]);
+        }
+      });
+      req.on('timeout', () => { req.destroy(); resolve([]); });
+    });
+  }
+
+  return attempt(0);
+}
+
+function parseTopHubHTML(html) {
+  const items = [];
+  // 匹配模式: <td align="center">{rank}.</td>...<a href="{url}"...>{title}</a>...<td class="ws">{heat}</td>
+  const trRegex = /<tr>\s*<td[^>]*>(\d+)\.\s*<\/td>\s*<td[^>]*>\s*<a[^>]*href="([^"]*)"[^>]*>([^<]+)<\/a>/g;
+  let m;
+  while ((m = trRegex.exec(html)) !== null) {
+    const rank = parseInt(m[1]);
+    const url = m[2];
+    const title = m[3].trim();
+    if (!title || !url) continue;
+
+    // 在同一行中找 heat 值
+    const trStart = m.index;
+    const trEnd = html.indexOf('</tr>', trStart);
+    const trContent = html.substring(trStart, trEnd > -1 ? trEnd : trStart + 500);
+    const heatMatch = trContent.match(/class="ws"[^>]*>([^<]+)<\/td>/);
+    const hot = heatMatch ? heatMatch[1].trim() : '';
+    let hotNum = 0;
+    if (hot) {
+      const h = hot.replace(/万|亿/g, '');
+      const hVal = parseFloat(h) || 0;
+      if (hot.includes('亿')) hotNum = hVal * 100000000;
+      else if (hot.includes('万')) hotNum = hVal * 10000;
+      else hotNum = hVal;
+    }
+    items.push({ rank, title, url, hot, hot_num: hotNum });
+  }
+  return items;
+}
+
+// ========== 数据标准化 ==========
+
 function normalizeDcd(items, limit = 10) {
   return items.slice(0, limit).map((d, i) => ({
     rank: d.rank || i + 1, title: d.title || '', url: d.url || '',
@@ -144,14 +253,35 @@ function normalizeWeibo(items, limit = 20) {
     hot: d.hot_value || 0, hot_num: d.hot_value || 0, label: d.label || '',
   }));
 }
+function normalizeBaidu(items, limit = 50) {
+  return items.slice(0, limit).map((d, i) => ({
+    rank: d.rank || i + 1, title: d.title || '', url: d.link || d.url || '',
+    hot: d.hot_value || d.desc || '', hot_num: d.hot_value || 0, label: d.label || '',
+  }));
+}
 function normalizeItNews(items, limit = 20) {
   return items.slice(0, limit).map((d, i) => ({
     rank: i + 1, title: d.title || '', url: d.url || d.link || '',
     hot: '', hot_num: 0, label: '',
   }));
 }
+function normalizeAutohome(items, limit = 10) {
+  return items.slice(0, limit).map((d, i) => ({
+    rank: d.rank || i + 1, title: d.title || '', url: d.url || '',
+    hot: d.hot || '', hot_num: d.hot_num || 0,
+  }));
+}
+function normalizeTopHub(items, limit = 10) {
+  return items.slice(0, limit).map(d => ({
+    rank: d.rank, title: d.title, url: d.url,
+    hot: d.hot, hot_num: d.hot_num,
+  }));
+}
 
-function filterByKw(items, keywords, normalizer, limit = 10) {
+// ========== 关键词筛选 ==========
+
+function filterByKw(items, keywords, limit = 10) {
+  /** 原始 item 级别筛选，保留原始字段 */
   const result = [];
   for (const item of items) {
     const t = item.title || '';
@@ -160,8 +290,42 @@ function filterByKw(items, keywords, normalizer, limit = 10) {
     }
     if (result.length >= limit) break;
   }
-  return normalizer(result, limit);
+  return result;
 }
+
+function filterAndNormalize(items, keywords, normalizer, limit = 10) {
+  /** 先筛选再标准化（兼容旧接口） */
+  return normalizer(filterByKw(items, keywords, limit), limit);
+}
+
+/**
+ * 多源关键词筛选：从多个数据源中按关键词筛选，自动去重
+ * @param {Array<{items: Array, normalizer: Function, label: string}>} sources
+ * @param {string[]} keywords
+ * @param {number} limit
+ * @returns {Array} 标准化后的条目列表
+ */
+function multiSourceFilter(sources, keywords, limit = 10) {
+  const seen = new Set();
+  const result = [];
+  for (const src of sources) {
+    if (result.length >= limit) break;
+    const rawFiltered = filterByKw(src.items, keywords, limit);
+    for (const rawItem of rawFiltered) {
+      if (result.length >= limit) break;
+      const title = rawItem.title || '';
+      if (seen.has(title)) continue;
+      seen.add(title);
+      // 在 src 作用域内立即标准化（不同源字段名不同）
+      const normItem = src.normalizer([rawItem], 1)[0];
+      result.push(normItem);
+    }
+  }
+  // 重新编号
+  return result.map((item, i) => ({ ...item, rank: i + 1 }));
+}
+
+// ========== 热度格式化 ==========
 
 function formatHot(val) {
   const s = String(val).trim();
@@ -171,6 +335,8 @@ function formatHot(val) {
   if (n >= 10000) return (n / 10000).toFixed(1) + '万';
   return n > 0 ? String(n) : s;
 }
+
+// ========== HTML 生成 ==========
 
 function buildBoardHTML(id, logo, name, badge, color, items) {
   const maxHot = items.length > 0 ? Math.max(...items.map(i => i.hot_num || 0), 1) : 1;
@@ -259,66 +425,104 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
 <div class="boards">
 ${boardsHTML}
 </div>
-<div class="footer">数据来源: <a href="https://60s.viki.moe" target="_blank">60s API</a> · 部署于 <a href="https://pages.github.com" target="_blank">GitHub Pages</a></div>
+<div class="footer">数据来源: <a href="https://60s.viki.moe" target="_blank">60s API</a> · <a href="https://tophub.today" target="_blank">今日热榜</a> · 部署于 <a href="https://pages.github.com" target="_blank">GitHub Pages</a></div>
 <div class="back-top" id="backTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</div>
 <script>window.addEventListener('scroll',function(){document.getElementById('backTop').classList.toggle('show',window.scrollY>400)});</script>
 </body>
 </html>`;
 }
 
+// ========== 主流程 ==========
+
 async function main() {
   console.log('='.repeat(50));
   console.log(`全网热榜看板 - ${formatBJ(nowBJ())}`);
   console.log('='.repeat(50));
 
-  console.log('[1/6] 汽车之家热榜...');
-  const ahHot = await fetchAutohome(10).catch(e => { console.error('  汽车之家抓取失败:', e.message); return []; });
-  console.log(`  → ${ahHot.length} 条`);
+  // 并行抓取所有数据源
+  console.log('[抓取] 并行请求所有数据源...');
+  const [ahHot, dcd, toutiao, douyin, weibo, itnews, baidu] = await Promise.all([
+    fetchAutohome(10).catch(e => { console.error('  汽车之家失败:', e.message); return []; }),
+    fetchJSON(`${API_BASE}/dongchedi`).catch(e => { console.error('  懂车帝失败:', e.message); return []; }),
+    fetchJSON(`${API_BASE}/toutiao`).catch(e => { console.error('  头条失败:', e.message); return []; }),
+    fetchJSON(`${API_BASE}/douyin`).catch(e => { console.error('  抖音失败:', e.message); return []; }),
+    fetchJSON(`${API_BASE}/weibo`).catch(e => { console.error('  微博失败:', e.message); return []; }),
+    fetchJSON(`${API_BASE}/it-news`).catch(e => { console.error('  IT资讯失败:', e.message); return []; }),
+    fetchJSON(`${API_BASE}/baidu/hot`).catch(e => { console.error('  百度热搜失败:', e.message); return []; }),
+  ]);
+  console.log(`  汽车之家: ${ahHot.length} | 懂车帝: ${dcd.length} | 头条: ${toutiao.length} | 抖音: ${douyin.length}`);
+  console.log(`  微博: ${weibo.length} | IT资讯: ${itnews.length} | 百度热搜: ${baidu.length}`);
 
-  console.log('[2/6] 懂车帝热榜...');
-  const dcd = await fetchJSON(`${API_BASE}/dongchedi`);
-  console.log(`  → ${dcd.length} 条`);
+  // 抓取 tophub 微博文娱榜（带重试）
+  console.log('[抓取] tophub 微博文娱榜...');
+  const tophubEnt = await fetchTopHub(TOPHUB_ENT_NODE, 2);
+  console.log(`  tophub 文娱: ${tophubEnt.length} 条`);
 
-  console.log('[3/6] 今日头条...');
-  const toutiao = await fetchJSON(`${API_BASE}/toutiao`);
-  console.log(`  → ${toutiao.length} 条`);
+  // ===== 数据处理 =====
+  console.log('\n[处理] 组装看板数据...');
 
-  console.log('[4/6] 抖音热榜...');
-  const douyin = await fetchJSON(`${API_BASE}/douyin`);
-  console.log(`  → ${douyin.length} 条`);
+  // 汽车之家热榜 TOP10
+  const autohomeHot = normalizeAutohome(ahHot, 10);
+  console.log(`  汽车之家热榜: ${autohomeHot.length} 条`);
 
-  console.log('[5/6] 微博热搜...');
-  const weibo = await fetchJSON(`${API_BASE}/weibo`);
-  console.log(`  → ${weibo.length} 条`);
+  // 懂车帝热点榜 TOP10
+  const dcdHot = normalizeDcd(dcd, 10);
+  console.log(`  懂车帝热点榜: ${dcdHot.length} 条`);
 
-  console.log('[6/6] IT资讯(汽车补充)...');
-  const itnews = await fetchJSON(`${API_BASE}/it-news`);
-  console.log(`  → ${itnews.length} 条`);
-
-  // 数据处理
-  const autohomeHot = ahHot;                        // 汽车之家热榜（真实数据）
-  const dcdHot = normalizeDcd(dcd, 10);              // 懂车帝热点榜
-
-  // 微博汽车热榜：先从微博热搜匹配，不够10条则从IT资讯补充
-  const wbAutoFromWeibo = filterByKw(weibo, WEIBO_AUTO_KW, normalizeWeibo, 10);
-  let wbAuto = wbAutoFromWeibo;
-  if (wbAuto.length < 10 && itnews.length > 0) {
-    // 从it-news中筛选汽车内容，排除已有的标题
+  // 微博汽车热榜：多源关键词匹配（微博+头条+百度+抖音+IT资讯）+ 汽车之家补充
+  const autoSources = [
+    { items: weibo, normalizer: normalizeWeibo, label: '微博' },
+    { items: toutiao, normalizer: normalizeToutiao, label: '头条' },
+    { items: baidu, normalizer: normalizeBaidu, label: '百度' },
+    { items: douyin, normalizer: normalizeDouyin, label: '抖音' },
+    { items: itnews, normalizer: normalizeItNews, label: 'IT资讯' },
+  ];
+  let wbAuto = multiSourceFilter(autoSources, WEIBO_AUTO_KW, 10);
+  // 多源不够10条时，用汽车之家热榜补充（去重）
+  if (wbAuto.length < 10 && ahHot.length > 0) {
     const existTitles = new Set(wbAuto.map(i => i.title));
-    const itAuto = filterByKw(itnews, WEIBO_AUTO_KW, normalizeItNews, 10)
-      .filter(i => !existTitles.has(i.title));
-    wbAuto = [...wbAuto, ...itAuto].slice(0, 10);
-    // 重新编号
-    wbAuto = wbAuto.map((item, i) => ({ ...item, rank: i + 1 }));
+    const ahSupplement = normalizeAutohome(ahHot, 10).filter(i => !existTitles.has(i.title));
+    wbAuto = [...wbAuto, ...ahSupplement].slice(0, 10).map((item, i) => ({ ...item, rank: i + 1 }));
   }
-  console.log(`  微博汽车热榜: ${wbAutoFromWeibo.length}(微博) + ${wbAuto.length - wbAutoFromWeibo.length}(IT资讯) = ${wbAuto.length} 条`);
+  console.log(`  微博汽车热榜: ${wbAuto.length} 条 (多源+汽车之家补充)`);
 
-  const ttHot = normalizeToutiao(toutiao, 20);       // 头条热榜
-  const dyHot = normalizeDouyin(douyin, 20);         // 抖音热榜
-  const wbHot = normalizeWeibo(weibo, 20);           // 微博热搜
-  const wbEnt = filterByKw(weibo, ENT_KW, normalizeWeibo, 10);   // 微博文娱
-  const wbTech = filterByKw(weibo, TECH_KW, normalizeWeibo, 10); // 微博科技
+  // 今日头条热榜 TOP20
+  const ttHot = normalizeToutiao(toutiao, 20);
 
+  // 抖音热榜 TOP20
+  const dyHot = normalizeDouyin(douyin, 20);
+
+  // 微博热搜 TOP20
+  const wbHot = normalizeWeibo(weibo, 20);
+
+  // 微博文娱 TOP10: tophub 优先，fallback 到多源关键词匹配
+  let wbEnt, entSource;
+  if (tophubEnt.length >= 5) {
+    wbEnt = normalizeTopHub(tophubEnt, 10);
+    entSource = 'tophub';
+  } else {
+    console.log('  tophub 文娱数据不足，fallback 到关键词匹配...');
+    const entSources = [
+      { items: weibo, normalizer: normalizeWeibo, label: '微博' },
+      { items: toutiao, normalizer: normalizeToutiao, label: '头条' },
+      { items: baidu, normalizer: normalizeBaidu, label: '百度' },
+    ];
+    wbEnt = multiSourceFilter(entSources, ENT_KW, 10);
+    entSource = '多源关键词';
+  }
+  console.log(`  微博文娱: ${wbEnt.length} 条 (${entSource})`);
+
+  // 微博科技 TOP10: 多源关键词匹配（微博+头条+百度+IT资讯）
+  const techSources = [
+    { items: weibo, normalizer: normalizeWeibo, label: '微博' },
+    { items: toutiao, normalizer: normalizeToutiao, label: '头条' },
+    { items: baidu, normalizer: normalizeBaidu, label: '百度' },
+    { items: itnews, normalizer: normalizeItNews, label: 'IT资讯' },
+  ];
+  const wbTech = multiSourceFilter(techSources, TECH_KW, 10);
+  console.log(`  微博科技: ${wbTech.length} 条 (多源: ${techSources.map(s=>s.label).join('+')})`);
+
+  // ===== 组装看板 =====
   const boards = [
     // 第一行
     { id: 'autohome-hot', logo: 'https://www.autohome.com.cn/favicon.ico', name: '汽车之家', badge: '热榜',     color: '#FF6600', items: autohomeHot },
