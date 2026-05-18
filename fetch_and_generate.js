@@ -381,7 +381,7 @@ function generateHTML(boards) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>全网热榜看板</title>
+<title>YU-全网热点看板</title>
 <style>
 :root{--bg:#f0f2f5;--card:#fff;--text:#1a1a2e;--text2:#6b7280;--border:#e5e7eb;--shadow:0 2px 8px rgba(0,0,0,.06);--radius:12px}
 @media(prefers-color-scheme:dark){:root{--bg:#0a0a0f;--card:#16161d;--text:#e8e8ed;--text2:#6e6e78;--border:#2a2a35;--shadow:0 2px 8px rgba(0,0,0,.3)}}
@@ -422,7 +422,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
 </style>
 </head>
 <body>
-<div class="header"><h1>全网热榜看板</h1><div class="sub">每日 10:30 &amp; 15:00 自动更新 <span>${updateTime}</span></div></div>
+<div class="header"><h1>YU-全网热点看板</h1><div class="sub">每日 10:30 &amp; 15:00 自动更新 <span>${updateTime}</span></div></div>
 <div class="boards">
 ${boardsHTML}
 </div>
@@ -539,8 +539,8 @@ async function main() {
   // ===== 组装看板 =====
   const boards = [
     // 第一行
-    { id: 'autohome-hot', logo: 'https://www.autohome.com.cn/favicon.ico', name: '汽车之家', badge: '热榜',     color: '#FF6600', items: autohomeHot },
-    { id: 'dcd-hot',      logo: 'https://icon.horse/icon/www.dongchedi.com', name: '懂车帝',   badge: '热点榜',   color: '#00b894', items: dcdHot },
+    { id: 'autohome-hot', logo: 'https://www.autohome.com.cn/favicon.ico', name: '汽车之家', badge: '热榜',     color: '#3b82f6', items: autohomeHot },
+    { id: 'dcd-hot',      logo: 'https://icon.horse/icon/www.dongchedi.com', name: '懂车帝',   badge: '热点榜',   color: '#eab308', items: dcdHot },
     { id: 'wb-auto',      logo: 'https://weibo.com/favicon.ico',           name: '新浪微博', badge: '汽车热榜', color: '#e17055', items: wbAuto },
     { id: 'tt-hot',       logo: 'https://www.toutiao.com/favicon.ico',     name: '今日头条', badge: '头条热榜', color: '#ff4757', items: ttHot },
     // 第二行
