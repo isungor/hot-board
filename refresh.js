@@ -36,13 +36,44 @@
     }).catch(function(e) { console.warn('fetchJSON:', url, e); return []; });
   }
 
+  // CORS 代理列表（用于绕过 tophub 跨域限制）
+  var CORS_PROXIES = [
+    function(u) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u); },
+    function(u) { return 'https://corsproxy.io/?' + encodeURIComponent(u); },
+  ];
+
   function fetchTopHub(node) {
-    return fetch(TOPHUB + node).then(function(r) {
-      if (!r.ok) return '';
+    var url = TOPHUB + node;
+    // 先尝试直连（同域或 CORS 允许时）
+    return fetch(url, { mode: 'cors' }).then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.text();
     }).then(function(html) {
-      return html ? parseTopHub(html) : [];
-    }).catch(function(e) { console.warn('fetchTopHub:', node, e); return []; });
+      if (!html || html.indexOf('安全验证') >= 0) throw new Error('blocked');
+      return parseTopHub(html);
+    }).catch(function() {
+      // 直连失败，尝试 CORS 代理
+      var proxyIdx = 0;
+      function tryProxy() {
+        if (proxyIdx >= CORS_PROXIES.length) {
+          console.warn('fetchTopHub: all CORS proxies failed for', node);
+          return [];
+        }
+        var proxyUrl = CORS_PROXIES[proxyIdx](url);
+        return fetch(proxyUrl).then(function(r) {
+          if (!r.ok) throw new Error('proxy HTTP ' + r.status);
+          return r.text();
+        }).then(function(html) {
+          if (!html || html.indexOf('安全验证') >= 0) throw new Error('blocked');
+          return parseTopHub(html);
+        }).catch(function(e) {
+          proxyIdx++;
+          console.warn('fetchTopHub proxy ' + proxyIdx + ' failed:', node, e.message);
+          return tryProxy();
+        });
+      }
+      return tryProxy();
+    });
   }
 
   function parseTopHub(html) {
@@ -164,8 +195,17 @@
   function buildBoard(cfg) {
     var items = cfg.items;
     var maxHot = 1;
+    var hasAnyHot = false;
     for (var i = 0; i < items.length; i++) {
-      if ((items[i].hot_num || 0) > maxHot) maxHot = items[i].hot_num;
+      var hn = items[i].hot_num || 0;
+      if (hn > maxHot) maxHot = hn;
+      if (hn > 0) hasAnyHot = true;
+    }
+    // 如果没有任何热度值，用排名反向生成相对热度（第1名=100%）
+    if (!hasAnyHot && items.length > 1) {
+      for (var i = 0; i < items.length; i++) {
+        items[i]._relPct = Math.round((items.length - i) / items.length * 100);
+      }
     }
     var html = '';
     if (!items.length) {
@@ -173,15 +213,16 @@
     } else {
       for (var i = 0; i < items.length; i++) {
         var item = items[i];
-        var pct = Math.round((item.hot_num || 0) / maxHot * 100);
+        var pct = hasAnyHot ? Math.round((item.hot_num || 0) / maxHot * 100) : (item._relPct || 0);
         var rc = item.rank <= 3 ? 'rank-top' : item.rank <= 10 ? 'rank-accent' : 'rank-normal';
         var su = (item.url || '#').replace(/'/g, '&#39;');
         var st = (item.title || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        var hotDisplay = fmtHot(item.hot);
         html += '<div class="item" onclick="window.open(\'' + su + '\',\'_blank\')">' +
           '<div class="rank ' + rc + '">' + item.rank + '</div>' +
           '<div class="item-body"><a class="item-title" href="' + su + '" target="_blank" rel="noopener">' + st + '</a>' +
           '<div class="item-foot"><div class="bar-wrap"><div class="bar-fill" style="width:' + pct + '%;background:#d1d5db"></div></div>' +
-          '<span class="hot-num">' + fmtHot(item.hot) + '</span></div></div></div>';
+          '<span class="hot-num">' + hotDisplay + '</span></div></div></div>';
       }
     }
     return '<div class="board" id="' + cfg.id + '">' +
@@ -224,7 +265,10 @@
             {items:it,norm:normIt}
           ], AUTO_KW, 10) },
         { id:'tt-auto', logo:'https://www.toutiao.com/favicon.ico', name:'今日头条', badge:'汽车热榜', color:'#F85959',
-          items: thTtAuto.length >= 5 ? thTtAuto.slice(0,10) : [] },
+          items: thTtAuto.length >= 5 ? thTtAuto.slice(0,10) : multiFilter([
+            {items:tt,norm:normGeneric},{items:wb,norm:normGeneric},{items:dy,norm:normGeneric},
+            {items:dcd,norm:normDcd},{items:it,norm:normIt}
+          ], AUTO_KW, 10) },
         { id:'tt-hot', logo:'https://www.toutiao.com/favicon.ico', name:'今日头条', badge:'头条热榜', color:'#ff4757', items: normGeneric(tt,20) },
         { id:'dy-hot', logo:'https://www.douyin.com/favicon.ico', name:'抖音', badge:'热榜', color:'#1a1a2e', items: normGeneric(dy,20) },
         { id:'wb-hot', logo:'https://weibo.com/favicon.ico', name:'新浪微博', badge:'热搜榜', color:'#ff4500', items: normGeneric(wb,20) },
