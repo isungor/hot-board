@@ -392,6 +392,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
 .header h1{font-size:24px;font-weight:800;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-.5px}
 .header .sub{font-size:13px;color:var(--text2);margin-top:6px}
 .header .sub span{display:inline-block;background:rgba(102,126,234,.1);color:#667eea;padding:2px 10px;border-radius:20px;font-weight:600;font-size:12px;margin-left:6px}
+.refresh-btn{display:inline-flex;align-items:center;gap:4px;background:rgba(102,126,234,.1);color:#667eea;border:1px solid rgba(102,126,234,.15);padding:2px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;margin-left:6px;font-family:inherit}
+.refresh-btn:hover{background:rgba(102,126,234,.2);border-color:rgba(102,126,234,.3)}
+.refresh-btn.loading{opacity:.6;pointer-events:none}
+@keyframes spin-anim{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.refresh-btn.loading .spin-icon{animation:spin-anim 1s linear infinite;display:inline-block}
 .boards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;max-width:1400px;margin:16px auto;padding:0 16px 24px}
 .board{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
 .board-head{display:flex;align-items:center;gap:8px;padding:12px 14px 10px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--card);z-index:10}
@@ -423,13 +428,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
 </style>
 </head>
 <body>
-<div class="header"><h1>YU-全网热点看板</h1><div class="sub">每日 10:30 &amp; 15:00 自动更新 <span>${updateTime}</span></div></div>
+<div class="header"><h1>YU-全网热点看板</h1><div class="sub"><span id="clock">${updateTime}</span><button class="refresh-btn" id="refreshBtn" onclick="refreshAll()"><span class="spin-icon">⟳</span> 刷新</button></div></div>
 <div class="boards">
 ${boardsHTML}
 </div>
 <div class="footer">数据来源: <a href="https://60s.viki.moe" target="_blank">60s API</a> · <a href="https://tophub.today" target="_blank">今日热榜</a> · 部署于 <a href="https://pages.github.com" target="_blank">GitHub Pages</a></div>
 <div class="back-top" id="backTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</div>
 <script>window.addEventListener('scroll',function(){document.getElementById('backTop').classList.toggle('show',window.scrollY>400)});</script>
+<script src="refresh.js"></script>
 </body>
 </html>`;
 }
