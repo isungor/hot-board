@@ -18,7 +18,7 @@
   // ========== API 配置 ==========
   var API_BASE = 'https://60s.viki.moe/v2';
   var TOPHUB = 'https://tophub.today';
-  var TH_NODES = { ent: '/n/3QeLwJEd7k', auto: '/n/aEdZbrkdrO', dcd: '/n/7GdaA8kdQy' };
+  var TH_NODES = { ent: '/n/3QeLwJEd7k', auto: '/n/aEdZbrkdrO', dcd: '/n/7GdaA8kdQy', ttAuto: '/n/Q0orLpDd8B' };
   var AH_API = 'https://news.app.autohome.com.cn/news_v10.0.0/news/newshotrankh5list';
 
   // ========== 关键词 ==========
@@ -204,15 +204,15 @@
       fetchJSON(API_BASE + '/douyin'),
       fetchJSON(API_BASE + '/weibo'),
       fetchJSON(API_BASE + '/it-news'),
-      fetchJSON(API_BASE + '/baidu/hot'),
       fetchAutohome(),
       fetchTopHub(TH_NODES.ent),
       fetchTopHub(TH_NODES.auto),
       fetchTopHub(TH_NODES.dcd),
+      fetchTopHub(TH_NODES.ttAuto),
     ]).then(function(results) {
       var dcd = results[0], tt = results[1], dy = results[2], wb = results[3];
-      var it = results[4], bd = results[5], ah = results[6];
-      var thEnt = results[7], thAuto = results[8], thDcd = results[9];
+      var it = results[4], ah = results[5];
+      var thEnt = results[6], thAuto = results[7], thDcd = results[8], thTtAuto = results[9];
 
       var boards = [
         { id:'autohome-hot', logo:'https://www.autohome.com.cn/favicon.ico', name:'汽车之家', badge:'热榜', color:'#3b82f6', items: ah },
@@ -220,20 +220,18 @@
           items: thDcd.length >= 5 ? thDcd.slice(0,10) : normDcd(dcd,10) },
         { id:'wb-auto', logo:'https://weibo.com/favicon.ico', name:'新浪微博', badge:'汽车热榜', color:'#e17055',
           items: thAuto.length >= 5 ? thAuto.slice(0,10) : multiFilter([
-            {items:wb,norm:normGeneric},{items:tt,norm:normGeneric},{items:bd,norm:normBaidu},
-            {items:dy,norm:normGeneric},{items:it,norm:normIt}
+            {items:wb,norm:normGeneric},{items:tt,norm:normGeneric},{items:dy,norm:normGeneric},
+            {items:it,norm:normIt}
           ], AUTO_KW, 10) },
+        { id:'tt-auto', logo:'https://www.toutiao.com/favicon.ico', name:'今日头条', badge:'汽车热榜', color:'#F85959',
+          items: thTtAuto.length >= 5 ? thTtAuto.slice(0,10) : [] },
         { id:'tt-hot', logo:'https://www.toutiao.com/favicon.ico', name:'今日头条', badge:'头条热榜', color:'#ff4757', items: normGeneric(tt,20) },
         { id:'dy-hot', logo:'https://www.douyin.com/favicon.ico', name:'抖音', badge:'热榜', color:'#1a1a2e', items: normGeneric(dy,20) },
         { id:'wb-hot', logo:'https://weibo.com/favicon.ico', name:'新浪微博', badge:'热搜榜', color:'#ff4500', items: normGeneric(wb,20) },
         { id:'wb-ent', logo:'https://weibo.com/favicon.ico', name:'新浪微博', badge:'文娱热搜', color:'#e84393',
           items: thEnt.length >= 5 ? thEnt.slice(0,10) : multiFilter([
-            {items:wb,norm:normGeneric},{items:tt,norm:normGeneric},{items:bd,norm:normBaidu}
+            {items:wb,norm:normGeneric},{items:tt,norm:normGeneric}
           ], ENT_KW, 10) },
-        { id:'wb-tech', logo:'https://weibo.com/favicon.ico', name:'新浪微博', badge:'科技热搜', color:'#6c5ce7',
-          items: multiFilter([
-            {items:wb,norm:normGeneric},{items:tt,norm:normGeneric},{items:bd,norm:normBaidu},{items:it,norm:normIt}
-          ], TECH_KW, 10) },
       ];
 
       var boardsEl = document.querySelector('.boards');
