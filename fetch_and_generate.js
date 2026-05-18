@@ -17,6 +17,7 @@ const AUTOHOME_API = 'https://news.app.autohome.com.cn/news_v10.0.0/news/newshot
 const TOPHUB_ENT_NODE = '/n/3QeLwJEd7k';  // 微博文娱榜
 const TOPHUB_AUTO_NODE = '/n/aEdZbrkdrO'; // 新浪汽车热搜榜
 const TOPHUB_DCD_NODE = '/n/7GdaA8kdQy';  // 懂车帝热搜榜
+const TOPHUB_TT_AUTO_NODE = '/n/Q0orLpDd8B'; // 今日头条汽车热榜
 const TOPHUB_BASE = 'https://tophub.today';
 const TIMEOUT = 15000;
 
@@ -449,26 +450,26 @@ async function main() {
 
   // 并行抓取所有数据源
   console.log('[抓取] 并行请求所有数据源...');
-  const [ahHot, dcd, toutiao, douyin, weibo, itnews, baidu] = await Promise.all([
+  const [ahHot, dcd, toutiao, douyin, weibo, itnews] = await Promise.all([
     fetchAutohome(10).catch(e => { console.error('  汽车之家失败:', e.message); return []; }),
     fetchJSON(`${API_BASE}/dongchedi`).catch(e => { console.error('  懂车帝失败:', e.message); return []; }),
     fetchJSON(`${API_BASE}/toutiao`).catch(e => { console.error('  头条失败:', e.message); return []; }),
     fetchJSON(`${API_BASE}/douyin`).catch(e => { console.error('  抖音失败:', e.message); return []; }),
     fetchJSON(`${API_BASE}/weibo`).catch(e => { console.error('  微博失败:', e.message); return []; }),
     fetchJSON(`${API_BASE}/it-news`).catch(e => { console.error('  IT资讯失败:', e.message); return []; }),
-    fetchJSON(`${API_BASE}/baidu/hot`).catch(e => { console.error('  百度热搜失败:', e.message); return []; }),
   ]);
   console.log(`  汽车之家: ${ahHot.length} | 懂车帝: ${dcd.length} | 头条: ${toutiao.length} | 抖音: ${douyin.length}`);
-  console.log(`  微博: ${weibo.length} | IT资讯: ${itnews.length} | 百度热搜: ${baidu.length}`);
+  console.log(`  微博: ${weibo.length} | IT资讯: ${itnews.length}`);
 
-  // 并行抓取 tophub 三个榜单（带重试）
-  console.log('[抓取] tophub 三个榜单...');
-  const [tophubEnt, tophubAuto, tophubDcd] = await Promise.all([
+  // 并行抓取 tophub 四个榜单（带重试）
+  console.log('[抓取] tophub 四个榜单...');
+  const [tophubEnt, tophubAuto, tophubDcd, tophubTtAuto] = await Promise.all([
     fetchTopHub(TOPHUB_ENT_NODE, 2),
     fetchTopHub(TOPHUB_AUTO_NODE, 2),
     fetchTopHub(TOPHUB_DCD_NODE, 2),
+    fetchTopHub(TOPHUB_TT_AUTO_NODE, 2),
   ]);
-  console.log(`  tophub 文娱: ${tophubEnt.length} | 汽车: ${tophubAuto.length} | 懂车帝: ${tophubDcd.length} 条`);
+  console.log(`  tophub 文娱: ${tophubEnt.length} | 汽车: ${tophubAuto.length} | 懂车帝: ${tophubDcd.length} | 头条汽车: ${tophubTtAuto.length} 条`);
 
   // ===== 数据处理 =====
   console.log('\n[处理] 组装看板数据...');
@@ -514,6 +515,20 @@ async function main() {
   }
   console.log(`  微博汽车热榜: ${wbAuto.length} 条 (${autoSource})`);
 
+  // 今日头条汽车热榜 TOP10：tophub 头条汽车榜
+  let ttAuto, ttAutoSource;
+  if (tophubTtAuto.length >= 5) {
+    ttAuto = normalizeTopHub(tophubTtAuto, 10);
+    ttAutoSource = 'tophub';
+  } else {
+    ttAuto = multiSourceFilter([
+      { items: toutiao, normalizer: normalizeToutiao, label: '头条' },
+      { items: weibo, normalizer: normalizeWeibo, label: '微博' },
+    ], WEIBO_AUTO_KW, 10);
+    ttAutoSource = '多源关键词';
+  }
+  console.log(`  今日头条汽车热榜: ${ttAuto.length} 条 (${ttAutoSource})`);
+
   // 今日头条热榜 TOP20
   const ttHot = normalizeToutiao(toutiao, 20);
 
@@ -540,28 +555,18 @@ async function main() {
   }
   console.log(`  微博文娱: ${wbEnt.length} 条 (${entSource})`);
 
-  // 微博科技 TOP10: 多源关键词匹配（微博+头条+百度+IT资讯）
-  const techSources = [
-    { items: weibo, normalizer: normalizeWeibo, label: '微博' },
-    { items: toutiao, normalizer: normalizeToutiao, label: '头条' },
-    { items: baidu, normalizer: normalizeBaidu, label: '百度' },
-    { items: itnews, normalizer: normalizeItNews, label: 'IT资讯' },
-  ];
-  const wbTech = multiSourceFilter(techSources, TECH_KW, 10);
-  console.log(`  微博科技: ${wbTech.length} 条 (多源: ${techSources.map(s=>s.label).join('+')})`);
-
   // ===== 组装看板 =====
   const boards = [
     // 第一行
     { id: 'autohome-hot', logo: 'https://www.autohome.com.cn/favicon.ico', name: '汽车之家', badge: '热榜',     color: '#3b82f6', items: autohomeHot },
     { id: 'dcd-hot',      logo: 'https://icon.horse/icon/www.dongchedi.com', name: '懂车帝',   badge: '热点榜',   color: '#eab308', items: dcdHot },
     { id: 'wb-auto',      logo: 'https://weibo.com/favicon.ico',           name: '新浪微博', badge: '汽车热榜', color: '#e17055', items: wbAuto },
-    { id: 'tt-hot',       logo: 'https://www.toutiao.com/favicon.ico',     name: '今日头条', badge: '头条热榜', color: '#ff4757', items: ttHot },
+    { id: 'tt-auto',      logo: 'https://www.toutiao.com/favicon.ico',     name: '今日头条', badge: '汽车热榜', color: '#F85959', items: ttAuto },
     // 第二行
+    { id: 'tt-hot',       logo: 'https://www.toutiao.com/favicon.ico',     name: '今日头条', badge: '头条热榜', color: '#ff4757', items: ttHot },
     { id: 'dy-hot',       logo: 'https://www.douyin.com/favicon.ico',      name: '抖音',     badge: '热榜',     color: '#1a1a2e', items: dyHot },
     { id: 'wb-hot',       logo: 'https://weibo.com/favicon.ico',           name: '新浪微博', badge: '热搜榜',   color: '#ff4500', items: wbHot },
     { id: 'wb-ent',       logo: 'https://weibo.com/favicon.ico',           name: '新浪微博', badge: '文娱热搜', color: '#e84393', items: wbEnt },
-    { id: 'wb-tech',      logo: 'https://weibo.com/favicon.ico',           name: '新浪微博', badge: '科技热搜', color: '#6c5ce7', items: wbTech },
   ];
 
   const html = generateHTML(boards);
