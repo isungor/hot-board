@@ -14,7 +14,7 @@ from datetime import datetime, timezone, timedelta
 
 # ========== 配置 ==========
 API_BASE = "https://60s.viki.moe/v2"
-AUTOHOME_API = "https://news.app.autohome.com.cn/news_v10.0.0/news/newsranklistv2"
+AUTOHOME_API = "https://news.app.autohome.com.cn/news_v10.0.0/news/newshotrankh5list"
 TIMEOUT = 15  # 秒
 
 # 北京时区
@@ -170,7 +170,7 @@ def normalize_weibo(items, limit=20):
 
 
 def fetch_autohome(limit=10):
-    """抓取汽车之家热榜（真实数据，来自 fs.autohome.com.cn）"""
+    """抓取汽车之家「今日实时热点榜」（来自 fs.autohome.com.cn H5 页同源 API）"""
     url = AUTOHOME_API
     req = urllib.request.Request(url, headers={
         "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148",
@@ -179,29 +179,35 @@ def fetch_autohome(limit=10):
     try:
         with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-            hotranklist = (data or {}).get("result", {}).get("hotranklist", [])
-            # 取"热门总榜"（第一个分类）的前 limit 条
-            for cat in hotranklist:
-                lst = cat.get("list", [])
-                if not lst:
-                    continue
-                result = []
-                for i, item in enumerate(lst[:limit]):
-                    bizid = item.get("bizid") or item.get("biz_id")
-                    # 汽车之家热榜只有 APP scheme，无直接 web URL
-                    # 使用 H5 热榜页 hash 路由作为跳转链接
-                    item_url = f"https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id={bizid}"
-                    result.append({
-                        "rank": i + 1,
-                        "title": item.get("title", ""),
-                        "url": item_url,
-                        "hot": "",
-                        "hot_num": 0,
-                        "author": item.get("authorname", ""),
-                        "update_time": item.get("bizupdatetime", ""),
-                    })
-                return result
-            return []
+            hot_list = (data or {}).get("result", {}).get("list", [])
+            result = []
+            for item in hot_list[:limit]:
+                objectid = item.get("objectid", "")
+                hotnum = item.get("hotnum", "")
+                # 解析热度数值（如 "507.8万" → 5078000）
+                hot_num = 0
+                if hotnum:
+                    h = hotnum.replace("万", "").replace("亿", "")
+                    try:
+                        h_val = float(h)
+                        if "亿" in hotnum:
+                            hot_num = h_val * 100000000
+                        elif "万" in hotnum:
+                            hot_num = h_val * 10000
+                        else:
+                            hot_num = h_val
+                    except ValueError:
+                        hot_num = 0
+                # 使用 H5 热榜页 hash 路由跳转详情页（与网页端行为一致）
+                item_url = f"https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id={objectid}"
+                result.append({
+                    "rank": item.get("hotrank", len(result) + 1),
+                    "title": item.get("hottitle", ""),
+                    "url": item_url,
+                    "hot": hotnum,
+                    "hot_num": hot_num,
+                })
+            return result
     except Exception as e:
         print(f"[ERROR] 汽车之家热榜抓取失败: {e}", file=sys.stderr)
         return []
