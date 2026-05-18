@@ -94,6 +94,42 @@ function fetchJSON(url) {
   });
 }
 
+// ─── Tophub HTML 抓取 ─────────────────────────────
+function fetchTophubHTML(url) {
+  return new Promise((resolve, reject) => {
+    const req = require('https').get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml',
+        'Accept-Language': 'zh-CN,zh;q=0.9',
+        'Referer': 'https://tophub.today/',
+      },
+      timeout: TIMEOUT,
+    }, res => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => {
+        // 解析 table 中的热搜条目
+        const rows = [];
+        const re = /<tr>[sS]*?<td align="center">(d+).</td>[sS]*?<a href="([^"]+)"[^>]*>([^<]+)</a>[sS]*?<td class="ws">([^<]+)</td>[sS]*?</tr>/g;
+        let m;
+        while ((m = re.exec(data)) !== null) {
+          rows.push({
+            rank: parseInt(m[1]),
+            url: m[2],
+            title: m[3].trim(),
+            hot: m[4].trim(),
+            hot_num: parseFloat(m[4]) * (m[4].includes('万') ? 10000 : 1) || 0,
+          });
+        }
+        resolve(rows);
+      });
+    });
+    req.on('error', () => resolve([]));
+    req.on('timeout', () => { req.destroy(); resolve([]); });
+  });
+}
+
 // ─── 数据归一化 ────────────────────────────────────
 function normalizeDcd(items, limit = 10) {
   return items.slice(0, limit).map((d, i) => ({
@@ -278,7 +314,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
 <div class="boards">
 ${boardsHTML}
 </div>
-<div class="footer">数据来源: <a href="https://60s.viki.moe" target="_blank">60s API</a> · 部署于 <a href="https://pages.github.com" target="_blank">GitHub Pages</a></div>
+<div class="footer">数据来源: <a href="https://60s.viki.moe" target="_blank">60s API</a> · <a href="https://tophub.today" target="_blank">今日热榜</a> · 部署于 <a href="https://pages.github.com" target="_blank">GitHub Pages</a></div>
 <div class="back-top" id="backTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">&uarr;</div>
 <script>window.addEventListener('scroll',function(){document.getElementById('backTop').classList.toggle('show',window.scrollY>400)});</script>
 </body>
@@ -290,16 +326,17 @@ async function fetchAndGenerate() {
   console.log(`[${formatBJ(nowBJ())}] 开始抓取数据...`);
 
   // 并发请求所有 API（6个数据源）
-  const [dcd, toutiao, douyin, weibo, itnews, baidu] = await Promise.allSettled([
+  const [dcd, toutiao, douyin, weibo, itnews, baidu, tophubEnt] = await Promise.allSettled([
     fetchJSON(`${API_BASE}/dongchedi`),
     fetchJSON(`${API_BASE}/toutiao`),
     fetchJSON(`${API_BASE}/douyin`),
     fetchJSON(`${API_BASE}/weibo`),
     fetchJSON(`${API_BASE}/it-news`),
     fetchJSON(`${API_BASE}/baidu/hot`),
+    fetchTophubHTML('https://tophub.today/n/3QeLwJEd7k'),
   ]).then(results => results.map(r => r.status === 'fulfilled' ? r.value : []));
 
-  console.log(`  懂车帝: ${dcd.length} | 头条: ${toutiao.length} | 抖音: ${douyin.length} | 微博: ${weibo.length} | IT资讯: ${itnews.length} | 百度: ${baidu.length}`);
+  console.log(`  懂车帝: ${dcd.length} | 头条: ${toutiao.length} | 抖音: ${douyin.length} | 微博: ${weibo.length} | IT资讯: ${itnews.length} | 百度: ${baidu.length} | 今日热榜文娱: ${tophubEnt.length}`);
 
   // ─── 数据处理 ─────────────────────────────────────
 
@@ -330,7 +367,11 @@ async function fetchAndGenerate() {
   const ttHot = normalizeToutiao(toutiao, 20);
   const dyHot = normalizeDouyin(douyin, 20);
   const wbHot = normalizeWeibo(weibo, 20);
-  const wbEnt = filterByKw(weibo, ENT_KW, normalizeWeibo, 10);
+  // 文娱热搜：优先用 tophub 真实数据，失败时关键词匹配兜底
+  const wbEnt = tophubEnt.length >= 5
+    ? tophubEnt.slice(0, 10)
+    : filterByKw(weibo, ENT_KW, normalizeWeibo, 10);
+  console.log(`  微博文娱热搜: ${wbEnt.length} 条 (来源: ${tophubEnt.length >= 5 ? 'tophub' : '关键词兜底'})`);
 
   // ─── 看板配置（badge 颜色与 logo 品牌色一致） ──────
   const boards = [
