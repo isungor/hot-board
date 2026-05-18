@@ -267,6 +267,27 @@ function multiSourceFilter(sources, keywords, limit = 10) {
   return result.map((item, i) => ({ ...item, rank: i + 1 }));
 }
 
+// ========== 热度补全：从 60s API 数据按 URL 匹配补充热度 ==========
+function enrichHotFromAPI(boardItems, apiItems, urlKey = 'link') {
+  // 从 apiItems 构建 URL → hot_value 映射
+  const hotMap = new Map();
+  for (const item of apiItems) {
+    const url = item[urlKey] || item.link || item.url || '';
+    if (url && item.hot_value > 0) hotMap.set(url, item.hot_value);
+  }
+  let enriched = 0;
+  for (const item of boardItems) {
+    if ((item.hot_num || 0) > 0) continue; // 已有热度不覆盖
+    const matched = hotMap.get(item.url) || hotMap.get((item.url || '').replace('http://', 'https://'));
+    if (matched) {
+      item.hot_num = matched;
+      item.hot = String(matched);
+      enriched++;
+    }
+  }
+  if (enriched > 0) console.log(`    热度补全: ${enriched} 条`);
+}
+
 // ========== 热度格式化 ==========
 
 function formatHot(val) {
@@ -461,6 +482,12 @@ async function fetchAndGenerate() {
     ttAutoSource = '多源关键词';
   }
   console.log(`  今日头条汽车热榜: ${ttAuto.length} 条 (${ttAutoSource})`);
+
+  // ===== 热度补全：tophub 数据没有热度时，从 60s API 按匹配补充 =====
+  console.log('[补全] 为 tophub 看板补充热度值...');
+  enrichHotFromAPI(ttAuto, toutiao, 'link');
+  enrichHotFromAPI(dcdHot, dcd, 'url');
+  enrichHotFromAPI(wbAuto, [...weibo, ...toutiao, ...douyin, ...itnews], 'link');
 
   // 今日头条热榜 TOP20
   const ttHot = normalizeToutiao(toutiao, 20);
