@@ -95,41 +95,71 @@ function fetchJSON(url) {
 }
 
 // ─── 数据归一化 ────────────────────────────────────
-// ─── Tophub HTML 抓取 ─────────────────────────────
-function fetchTophubHTML(url) {
-  return new Promise((resolve) => {
-    const req = require('https').get(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml',
-        'Accept-Language': 'zh-CN,zh;q=0.9',
-        'Referer': 'https://tophub.today/',
-      },
-      timeout: TIMEOUT,
-    }, res => {
-      let data = '';
-      res.on('data', c => data += c);
-      res.on('end', () => {
-        const rows = [];
-        // 用 new RegExp 避免反斜杠被 shell 吞掉
-        const trRe = new RegExp(
-          '<tr>[\s\S]*?<td align="center">(\d+)\.<\/td>' +
-          '[\s\S]*?<a href="([^"]+)"[^>]*>([^<]+)<\/a>' +
-          '[\s\S]*?<td class="ws">([^<]+)<\/td>' +
-          '[\s\S]*?<\/tr>',
-          'g'
-        );
-        let m;
-        while ((m = trRe.exec(data)) !== null) {
-          const hotStr = m[4].trim();
-          const hotNum = parseFloat(hotStr) * (hotStr.includes('万') ? 10000 : 1) || 0;
-          rows.push({ rank: parseInt(m[1]), url: m[2], title: m[3].trim(), hot: hotStr, hot_num: hotNum });
+// ─── Tophub HTML 抓取（含重试） ─────────────────────
+function fetchTophubHTML(url, retries = 2) {
+  function attempt(attemptNum) {
+    return new Promise((resolve) => {
+      const req = require('https').get(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml',
+          'Accept-Language': 'zh-CN,zh;q=0.9',
+          'Referer': 'https://tophub.today/',
+          'Cache-Control': 'no-cache',
+        },
+        timeout: TIMEOUT,
+      }, res => {
+        // 检查是否被重定向到安全验证页
+        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          console.log(`  [tophub] 第${attemptNum}次: 被重定向 (${res.statusCode})`);
+          resolve([]);
+          return;
         }
-        resolve(rows);
+        let data = '';
+        res.on('data', c => data += c);
+        res.on('end', () => {
+          // 检查页面是否包含有效表格数据
+          if (!data.includes('<tr>') || !data.includes('class="ws"')) {
+            console.log(`  [tophub] 第${attemptNum}次: 页面无有效表格 (长度:${data.length})`);
+            resolve([]);
+            return;
+          }
+          const rows = [];
+          // 用 new RegExp 避免反斜杠被 shell 吞掉
+          const trRe = new RegExp(
+            '<tr>[\\s\\S]*?<td align="center">(\\d+)\\.<\\/td>' +
+            '[\\s\\S]*?<a href="([^"]+)"[^>]*>([^<]+)<\\/a>' +
+            '[\\s\\S]*?<td class="ws">([^<]+)<\\/td>' +
+            '[\\s\\S]*?<\\/tr>',
+            'g'
+          );
+          let m;
+          while ((m = trRe.exec(data)) !== null) {
+            const hotStr = m[4].trim();
+            const hotNum = parseFloat(hotStr) * (hotStr.includes('万') ? 10000 : 1) || 0;
+            rows.push({ rank: parseInt(m[1]), url: m[2], title: m[3].trim(), hot: hotStr, hot_num: hotNum });
+          }
+          console.log(`  [tophub] 第${attemptNum}次: 解析到 ${rows.length} 条`);
+          resolve(rows);
+        });
+      });
+      req.on('error', (e) => {
+        console.log(`  [tophub] 第${attemptNum}次: 请求错误 ${e.message}`);
+        resolve([]);
+      });
+      req.on('timeout', () => {
+        req.destroy();
+        console.log(`  [tophub] 第${attemptNum}次: 超时`);
+        resolve([]);
       });
     });
-    req.on('error', () => resolve([]));
-    req.on('timeout', () => { req.destroy(); resolve([]); });
+  }
+
+  return attempt(1).then(result => {
+    if (result.length >= 5 || retries <= 0) return result;
+    // 等待 3 秒后重试
+    console.log(`  [tophub] 首次仅 ${result.length} 条，3秒后重试...`);
+    return new Promise(r => setTimeout(r, 3000)).then(() => attempt(2));
   });
 }
 
@@ -327,7 +357,7 @@ ${boardsHTML}
 async function fetchAndGenerate() {
   console.log(`[${formatBJ(nowBJ())}] 开始抓取数据...`);
 
-  // 并发请求所有 API（6个数据源）
+  // 并发请求所有 API（6个数据源 + tophub 文娱）
   const [dcd, toutiao, douyin, weibo, itnews, baidu, tophubEnt] = await Promise.allSettled([
     fetchJSON(`${API_BASE}/dongchedi`),
     fetchJSON(`${API_BASE}/toutiao`),
@@ -335,7 +365,7 @@ async function fetchAndGenerate() {
     fetchJSON(`${API_BASE}/weibo`),
     fetchJSON(`${API_BASE}/it-news`),
     fetchJSON(`${API_BASE}/baidu/hot`),
-    fetchTophubHTML('https://tophub.today/n/3QeLwJEd7k'),
+    fetchTophubHTML('https://tophub.today/n/3QeLwJEd7k', 2),
   ]).then(results => results.map(r => r.status === 'fulfilled' ? r.value : []));
 
   console.log(`  懂车帝: ${dcd.length} | 头条: ${toutiao.length} | 抖音: ${douyin.length} | 微博: ${weibo.length} | IT资讯: ${itnews.length} | 百度: ${baidu.length} | 今日热榜文娱: ${tophubEnt.length}`);
