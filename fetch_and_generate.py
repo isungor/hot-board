@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-全网热榜看板 - 数据抓取 & HTML 生成脚本
-数据源: 60s.viki.moe API (免费，无需认证)
+全网热榜看板 - 数据抓取 & HTML 生成脚本 (GitHub Actions Python 版)
+数据源:
+  60s API: dongchedi / toutiao / douyin / weibo / it-news / baidu/hot
+  汽车之家: newshotrankh5list (H5 今日实时热点榜)
+  tophub:  微博文娱榜 (带重试 + fallback)
 """
 
 import json
@@ -10,29 +13,23 @@ import urllib.request
 import urllib.error
 import re
 import sys
+import time
 from datetime import datetime, timezone, timedelta
 
 # ========== 配置 ==========
 API_BASE = "https://60s.viki.moe/v2"
 AUTOHOME_API = "https://news.app.autohome.com.cn/news_v10.0.0/news/newshotrankh5list"
+TOPHUB_ENT_NODE = "/n/3QeLwJEd7k"  # 微博文娱榜
+TOPHUB_BASE = "https://tophub.today"
 TIMEOUT = 15  # 秒
 
 # 北京时区
 BJ_TZ = timezone(timedelta(hours=8))
 
-# 头条汽车筛选关键词
-AUTO_KEYWORDS = [
-    "车", "新能源", "比亚迪", "特斯拉", "丰田", "本田", "宝马", "奔驰",
-    "奥迪", "蔚来", "理想", "小鹏", "吉利", "长安", "大众", "福特",
-    "保时捷", "华为", "小米汽车", "小米SU", "乐道", "方程豹",
-    "自动驾驶", "充电", "续航", "混动", "纯电", "发动机", "变速箱",
-    "汽车", "轿车", "SUV", "MPV", "销量", "召回", "碰撞", "油价",
-    "充电桩", "路测", "试驾", "上市", "首发", "亮相"
-]
+# ========== 关键词 ==========
 
-# 微博汽车筛选关键词（精准匹配，避免误判）
 WEIBO_AUTO_KEYWORDS = [
-    # 汽车品牌
+    # 汽车品牌（精准匹配）
     "比亚迪", "特斯拉", "丰田", "本田", "宝马", "奔驰", "奥迪", "蔚来", "理想", "小鹏",
     "吉利", "长安汽车", "大众汽车", "大众ID", "福特", "保时捷", "东风日产", "问界", "智界", "享界",
     "极氪", "零跑", "岚图", "深蓝", "哪吒", "红旗", "领克", "奇瑞", "名爵", "阿维塔",
@@ -46,16 +43,18 @@ WEIBO_AUTO_KEYWORDS = [
     "车企", "造车", "新势力", "网约车", "车险", "驾考",
 ]
 
-# 微博文娱关键词
 ENT_KEYWORDS = [
     "文娱", "影视", "综艺", "明星", "音乐", "电影", "电视剧", "演出", "娱乐",
-    "浪姐", "歌手", "乘风", "演唱会", "票房", "热巴", "杨幂", "刘诗诗", "张柏芝",
-    "白鹿", "迪丽热巴", "王力宏", "柯南", "何猷君", "奚梦瑶", "方媛", "李纯",
-    "徐志胜", "张嘉益", "痞幼", "沈腾", "孙颖莎", "柳智敏", "Faker", "李乃文",
-    "梅婷", "选秀", "金鹰奖",
+    "浪姐", "歌手", "乘风", "芒果", "选秀", "演唱会", "票房",
+    "热巴", "杨幂", "刘诗诗", "张柏芝", "白鹿", "迪丽热巴", "王力宏", "柯南",
+    "何猷君", "奚梦瑶", "方媛", "李纯", "徐志胜", "张嘉益", "痞幼", "沈腾",
+    "孙颖莎", "柳智敏", "Faker", "李乃文", "梅婷", "黄圣依", "金鹰奖",
+    "归鸾", "家业", "藏海传", "张凌赫", "杨洋", "杨紫", "虞书欣",
+    "龚俊", "成毅", "王一博", "肖战", "王俊凯", "易烊千玺",
+    "中餐厅", "奔跑吧", "披荆斩棘", "演员请就位",
+    "戛纳", "金鸡", "华表", "百花",
 ]
 
-# 微博科技关键词
 TECH_KEYWORDS = [
     # AI / 大模型
     "英伟达", "NVIDIA", "OpenAI", "ChatGPT", "GPT", "大模型", "算力", "人工智能", "AI大模型",
@@ -81,7 +80,7 @@ TECH_KEYWORDS = [
 
 # ========== 数据抓取 ==========
 def fetch_json(url):
-    """请求API并返回JSON数据"""
+    """请求 60s API 并返回 JSON 数据"""
     req = urllib.request.Request(url, headers={
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
     })
@@ -94,79 +93,6 @@ def fetch_json(url):
     except Exception as e:
         print(f"[ERROR] Failed to fetch {url}: {e}", file=sys.stderr)
         return []
-
-
-def normalize_dcd(items, limit=10):
-    """标准化懂车帝数据"""
-    result = []
-    for i, item in enumerate(items[:limit]):
-        result.append({
-            "rank": item.get("rank", i + 1),
-            "title": item.get("title", ""),
-            "url": item.get("url", ""),
-            "hot": item.get("score_desc", str(item.get("score", ""))),
-            "hot_num": item.get("score", 0),
-        })
-    return result
-
-
-def normalize_toutiao(items, limit=20):
-    """标准化今日头条数据"""
-    result = []
-    for i, item in enumerate(items[:limit]):
-        result.append({
-            "rank": i + 1,
-            "title": item.get("title", ""),
-            "url": item.get("link", ""),
-            "hot": item.get("hot_value", 0),
-            "hot_num": item.get("hot_value", 0),
-            "label": item.get("label", ""),
-        })
-    return result
-
-
-def normalize_douyin(items, limit=20):
-    """标准化抖音数据"""
-    result = []
-    for i, item in enumerate(items[:limit]):
-        result.append({
-            "rank": i + 1,
-            "title": item.get("title", ""),
-            "url": item.get("link", ""),
-            "hot": item.get("hot_value", 0),
-            "hot_num": item.get("hot_value", 0),
-        })
-    return result
-
-
-def normalize_itnews(items, limit=20):
-    """标准化IT资讯数据（用于汽车热榜补充）"""
-    result = []
-    for i, item in enumerate(items[:limit]):
-        result.append({
-            "rank": i + 1,
-            "title": item.get("title", ""),
-            "url": item.get("url", item.get("link", "")),
-            "hot": "",
-            "hot_num": 0,
-            "label": "",
-        })
-    return result
-
-
-def normalize_weibo(items, limit=20):
-    """标准化微博数据"""
-    result = []
-    for i, item in enumerate(items[:limit]):
-        result.append({
-            "rank": i + 1,
-            "title": item.get("title", ""),
-            "url": item.get("link", ""),
-            "hot": item.get("hot_value", 0),
-            "hot_num": item.get("hot_value", 0),
-            "label": item.get("label", ""),
-        })
-    return result
 
 
 def fetch_autohome(limit=10):
@@ -184,7 +110,6 @@ def fetch_autohome(limit=10):
             for item in hot_list[:limit]:
                 objectid = item.get("objectid", "")
                 hotnum = item.get("hotnum", "")
-                # 解析热度数值（如 "507.8万" → 5078000）
                 hot_num = 0
                 if hotnum:
                     h = hotnum.replace("万", "").replace("亿", "")
@@ -198,7 +123,6 @@ def fetch_autohome(limit=10):
                             hot_num = h_val
                     except ValueError:
                         hot_num = 0
-                # 使用 H5 热榜页 hash 路由跳转详情页（与网页端行为一致）
                 item_url = f"https://fs.autohome.com.cn/app_spa/hotart/index.html#detail?id={objectid}"
                 result.append({
                     "rank": item.get("hotrank", len(result) + 1),
@@ -213,8 +137,162 @@ def fetch_autohome(limit=10):
         return []
 
 
+def fetch_tophub(node_path, retries=2):
+    """
+    抓取 tophub 页面并解析条目（带重试）
+    HTML 结构: <tr><td align="center">{rank}.</td><td><a href="{url}">{title}</a></td><td class="ws">{heat}</td>
+    """
+    url = f"{TOPHUB_BASE}{node_path}"
+    browser_headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+    }
+
+    for attempt in range(retries + 1):
+        try:
+            req = urllib.request.Request(url, headers=browser_headers)
+            with urllib.request.urlopen(req, timeout=TIMEOUT) as resp:
+                if resp.status == 503:
+                    if attempt < retries:
+                        time.sleep(1)
+                        continue
+                    return []
+                html = resp.read().decode("utf-8")
+                items = parse_tophub_html(html)
+                if items:
+                    return items
+                if attempt < retries:
+                    time.sleep(1)
+                    continue
+                return []
+        except Exception:
+            if attempt < retries:
+                time.sleep(1)
+                continue
+            return []
+    return []
+
+
+def parse_tophub_html(html):
+    """解析 tophub HTML，提取条目列表"""
+    items = []
+    # 匹配: <td align="center">{rank}.</td>...<a href="{url}"...>{title}</a>...<td class="ws">{heat}</td>
+    pattern = r'<tr>\s*<td[^>]*>(\d+)\.\s*</td>\s*<td[^>]*>\s*<a[^>]*href="([^"]*)"[^>]*>([^<]+)</a>'
+    for m in re.finditer(pattern, html):
+        rank = int(m.group(1))
+        url = m.group(2)
+        title = m.group(3).strip()
+        if not title or not url:
+            continue
+
+        # 在同一 <tr> 中查找热度值
+        tr_start = m.start()
+        tr_end = html.find("</tr>", tr_start)
+        tr_content = html[tr_start:tr_end if tr_end > -1 else tr_start + 500]
+        heat_match = re.search(r'class="ws"[^>]*>([^<]+)</td>', tr_content)
+        hot = heat_match.group(1).strip() if heat_match else ""
+        hot_num = 0
+        if hot:
+            h = hot.replace("万", "").replace("亿", "")
+            try:
+                h_val = float(h)
+                if "亿" in hot:
+                    hot_num = h_val * 100000000
+                elif "万" in hot:
+                    hot_num = h_val * 10000
+                else:
+                    hot_num = h_val
+            except ValueError:
+                hot_num = 0
+        items.append({"rank": rank, "title": title, "url": url, "hot": hot, "hot_num": hot_num})
+    return items
+
+
+# ========== 数据标准化 ==========
+def normalize_dcd(items, limit=10):
+    result = []
+    for i, item in enumerate(items[:limit]):
+        result.append({
+            "rank": item.get("rank", i + 1),
+            "title": item.get("title", ""),
+            "url": item.get("url", ""),
+            "hot": item.get("score_desc", str(item.get("score", ""))),
+            "hot_num": item.get("score", 0),
+        })
+    return result
+
+
+def normalize_toutiao(items, limit=20):
+    result = []
+    for i, item in enumerate(items[:limit]):
+        result.append({
+            "rank": i + 1,
+            "title": item.get("title", ""),
+            "url": item.get("link", ""),
+            "hot": item.get("hot_value", 0),
+            "hot_num": item.get("hot_value", 0),
+            "label": item.get("label", ""),
+        })
+    return result
+
+
+def normalize_douyin(items, limit=20):
+    result = []
+    for i, item in enumerate(items[:limit]):
+        result.append({
+            "rank": i + 1,
+            "title": item.get("title", ""),
+            "url": item.get("link", ""),
+            "hot": item.get("hot_value", 0),
+            "hot_num": item.get("hot_value", 0),
+        })
+    return result
+
+
+def normalize_weibo(items, limit=20):
+    result = []
+    for i, item in enumerate(items[:limit]):
+        result.append({
+            "rank": i + 1,
+            "title": item.get("title", ""),
+            "url": item.get("link", ""),
+            "hot": item.get("hot_value", 0),
+            "hot_num": item.get("hot_value", 0),
+            "label": item.get("label", ""),
+        })
+    return result
+
+
+def normalize_baidu(items, limit=50):
+    result = []
+    for i, item in enumerate(items[:limit]):
+        result.append({
+            "rank": item.get("rank", i + 1),
+            "title": item.get("title", ""),
+            "url": item.get("link", item.get("url", "")),
+            "hot": item.get("hot_value", item.get("desc", "")),
+            "hot_num": item.get("hot_value", 0),
+            "label": item.get("label", ""),
+        })
+    return result
+
+
+def normalize_itnews(items, limit=20):
+    result = []
+    for i, item in enumerate(items[:limit]):
+        result.append({
+            "rank": i + 1,
+            "title": item.get("title", ""),
+            "url": item.get("url", item.get("link", "")),
+            "hot": "",
+            "hot_num": 0,
+            "label": "",
+        })
+    return result
+
+
 def normalize_autohome(items, limit=10):
-    """标准化汽车之家热榜数据（与看板字段对齐）"""
     result = []
     for i, item in enumerate(items[:limit]):
         result.append({
@@ -227,8 +305,22 @@ def normalize_autohome(items, limit=10):
     return result
 
 
-def filter_by_keywords(items, keywords, normalizer, limit=10):
-    """通用关键词筛选"""
+def normalize_tophub(items, limit=10):
+    result = []
+    for item in items[:limit]:
+        result.append({
+            "rank": item.get("rank", 0),
+            "title": item.get("title", ""),
+            "url": item.get("url", ""),
+            "hot": item.get("hot", ""),
+            "hot_num": item.get("hot_num", 0),
+        })
+    return result
+
+
+# ========== 关键词筛选 ==========
+def filter_by_kw_raw(items, keywords, limit=10):
+    """原始 item 级别筛选，保留原始字段"""
     result = []
     for item in items:
         title = item.get("title", "")
@@ -238,12 +330,37 @@ def filter_by_keywords(items, keywords, normalizer, limit=10):
                 break
         if len(result) >= limit:
             break
-    return normalizer(result, limit)
+    return result
+
+
+def multi_source_filter(sources, keywords, limit=10):
+    """
+    多源关键词筛选：从多个数据源中按关键词筛选，自动去重
+    sources: [{"items": list, "normalizer": func, "label": str}, ...]
+    """
+    seen = set()
+    result = []
+    for src in sources:
+        if len(result) >= limit:
+            break
+        raw_filtered = filter_by_kw_raw(src["items"], keywords, limit)
+        for raw_item in raw_filtered:
+            if len(result) >= limit:
+                break
+            title = raw_item.get("title", "")
+            if title in seen:
+                continue
+            seen.add(title)
+            norm_item = src["normalizer"]([raw_item], 1)[0]
+            result.append(norm_item)
+    # 重新编号
+    for i, item in enumerate(result):
+        item["rank"] = i + 1
+    return result
 
 
 # ========== HTML 生成 ==========
 def format_hot(val):
-    """格式化热度值"""
     n = int(val) if isinstance(val, (int, float)) else 0
     s = str(val).strip()
     if "w" in s.lower() or "万" in s:
@@ -258,7 +375,6 @@ def format_hot(val):
 
 
 def build_board_html(board_id, logo_url, platform_name, badge_text, accent_color, items):
-    """生成单个看板HTML"""
     max_hot = max((item.get("hot_num", 0) for item in items), default=1) or 1
 
     if not items:
@@ -300,7 +416,6 @@ def build_board_html(board_id, logo_url, platform_name, badge_text, accent_color
 
 
 def generate_html(boards_data):
-    """生成完整的HTML页面"""
     now_bj = datetime.now(BJ_TZ)
     update_time = now_bj.strftime("%Y-%m-%d %H:%M")
 
@@ -569,7 +684,7 @@ body {{
 </div>
 
 <div class="footer">
-  数据来源: <a href="https://60s.viki.moe" target="_blank">60s API</a> · 部署于 <a href="https://pages.github.com" target="_blank">GitHub Pages</a>
+  数据来源: <a href="https://60s.viki.moe" target="_blank">60s API</a> · <a href="https://tophub.today" target="_blank">今日热榜</a> · 部署于 <a href="https://pages.github.com" target="_blank">GitHub Pages</a>
 </div>
 
 <div class="back-top" id="backTop" onclick="window.scrollTo({{top:0,behavior:'smooth'}})">↑</div>
@@ -589,75 +704,112 @@ def main():
     print(f"全网热榜看板 - 数据抓取 {datetime.now(BJ_TZ).strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 50)
 
-    # 1. 抓取基础数据
-    print("\n[1/6] 抓取汽车之家热榜...")
-    autohome_raw = fetch_autohome(10)
-    print(f"  → 获取 {len(autohome_raw)} 条")
+    # 1. 并行抓取所有数据源（使用线程模拟并发）
+    import concurrent.futures
 
-    print("[2/6] 抓取懂车帝热榜...")
-    dcd_raw = fetch_json(f"{API_BASE}/dongchedi")
-    print(f"  → 获取 {len(dcd_raw)} 条")
+    def fetch_all():
+        results = {}
+        with concurrent.futures.ThreadPoolExecutor(max_workers=7) as executor:
+            futures = {
+                executor.submit(fetch_autohome, 10): "autohome",
+                executor.submit(fetch_json, f"{API_BASE}/dongchedi"): "dcd",
+                executor.submit(fetch_json, f"{API_BASE}/toutiao"): "toutiao",
+                executor.submit(fetch_json, f"{API_BASE}/douyin"): "douyin",
+                executor.submit(fetch_json, f"{API_BASE}/weibo"): "weibo",
+                executor.submit(fetch_json, f"{API_BASE}/it-news"): "itnews",
+                executor.submit(fetch_json, f"{API_BASE}/baidu/hot"): "baidu",
+            }
+            for future in concurrent.futures.as_completed(futures):
+                key = futures[future]
+                try:
+                    results[key] = future.result()
+                except Exception as e:
+                    print(f"  {key} 抓取失败: {e}", file=sys.stderr)
+                    results[key] = []
+        return results
 
-    print("[3/6] 抓取今日头条热榜...")
-    toutiao_raw = fetch_json(f"{API_BASE}/toutiao")
-    print(f"  → 获取 {len(toutiao_raw)} 条")
+    print("\n[抓取] 并行请求所有数据源...")
+    data = fetch_all()
+    ah_raw = data.get("autohome", [])
+    dcd_raw = data.get("dcd", [])
+    toutiao_raw = data.get("toutiao", [])
+    douyin_raw = data.get("douyin", [])
+    weibo_raw = data.get("weibo", [])
+    itnews_raw = data.get("itnews", [])
+    baidu_raw = data.get("baidu", [])
+    print(f"  汽车之家: {len(ah_raw)} | 懂车帝: {len(dcd_raw)} | 头条: {len(toutiao_raw)} | 抖音: {len(douyin_raw)}")
+    print(f"  微博: {len(weibo_raw)} | IT资讯: {len(itnews_raw)} | 百度热搜: {len(baidu_raw)}")
 
-    print("[4/6] 抓取抖音热榜...")
-    douyin_raw = fetch_json(f"{API_BASE}/douyin")
-    print(f"  → 获取 {len(douyin_raw)} 条")
-
-    print("[5/6] 抓取微博热搜...")
-    weibo_raw = fetch_json(f"{API_BASE}/weibo")
-    print(f"  → 获取 {len(weibo_raw)} 条")
-
-    print("[6/6] 抓取IT资讯(汽车补充)...")
-    itnews_raw = fetch_json(f"{API_BASE}/it-news")
-    print(f"  → 获取 {len(itnews_raw)} 条")
+    # 抓取 tophub 微博文娱榜（带重试）
+    print("[抓取] tophub 微博文娱榜...")
+    tophub_ent = fetch_tophub(TOPHUB_ENT_NODE, 2)
+    print(f"  tophub 文娱: {len(tophub_ent)} 条")
 
     # 2. 数据处理
-    print("\n处理数据...")
+    print("\n[处理] 组装看板数据...")
 
-    # 汽车之家热榜 TOP10（真实数据，来自 autohome API）
-    autohome_hot = normalize_autohome(autohome_raw, 10)
-    print(f"  汽车之家热榜: {len(autohome_hot)} 条 (汽车之家 API)")
+    # 汽车之家热榜 TOP10
+    autohome_hot = normalize_autohome(ah_raw, 10)
+    print(f"  汽车之家热榜: {len(autohome_hot)} 条")
 
-    # 懂车帝热点榜 TOP10（作为独立板块保留）
-    dcd_hot = normalize_dcd(dcd_raw[:10]) if dcd_raw else []
+    # 懂车帝热点榜 TOP10
+    dcd_hot = normalize_dcd(dcd_raw, 10)
     print(f"  懂车帝热点榜: {len(dcd_hot)} 条")
 
-    # 微博汽车热榜：先从微博热搜匹配，不够10条则从IT资讯补充
-    weibo_auto_from_wb = filter_by_keywords(weibo_raw, WEIBO_AUTO_KEYWORDS, normalize_weibo, 10)
-    weibo_auto = list(weibo_auto_from_wb)
-    if len(weibo_auto) < 10 and itnews_raw:
+    # 微博汽车热榜：多源关键词匹配 + 汽车之家补充
+    auto_sources = [
+        {"items": weibo_raw, "normalizer": normalize_weibo, "label": "微博"},
+        {"items": toutiao_raw, "normalizer": normalize_toutiao, "label": "头条"},
+        {"items": baidu_raw, "normalizer": normalize_baidu, "label": "百度"},
+        {"items": douyin_raw, "normalizer": normalize_douyin, "label": "抖音"},
+        {"items": itnews_raw, "normalizer": normalize_itnews, "label": "IT资讯"},
+    ]
+    weibo_auto = multi_source_filter(auto_sources, WEIBO_AUTO_KEYWORDS, 10)
+    # 多源不够10条时，用汽车之家热榜补充（去重）
+    if len(weibo_auto) < 10 and ah_raw:
         exist_titles = {item["title"] for item in weibo_auto}
-        it_auto = filter_by_keywords(itnews_raw, WEIBO_AUTO_KEYWORDS, normalize_itnews, 10)
-        it_auto_filtered = [item for item in it_auto if item["title"] not in exist_titles]
-        weibo_auto = (weibo_auto + it_auto_filtered)[:10]
+        ah_supplement = normalize_autohome(ah_raw, 10)
+        ah_supplement = [item for item in ah_supplement if item["title"] not in exist_titles]
+        weibo_auto = (weibo_auto + ah_supplement)[:10]
         for i, item in enumerate(weibo_auto):
             item["rank"] = i + 1
-    print(f"  微博汽车热榜: {len(weibo_auto_from_wb)}(微博) + {len(weibo_auto) - len(weibo_auto_from_wb)}(IT资讯) = {len(weibo_auto)} 条")
+    print(f"  微博汽车热榜: {len(weibo_auto)} 条 (多源+汽车之家补充)")
 
     # 今日头条热榜 TOP20
     toutiao_hot = normalize_toutiao(toutiao_raw, 20)
-    print(f"  头条热榜: {len(toutiao_hot)} 条")
 
     # 抖音热榜 TOP20
     douyin_hot = normalize_douyin(douyin_raw, 20)
-    print(f"  抖音热榜: {len(douyin_hot)} 条")
 
     # 微博热搜 TOP20
     weibo_hot = normalize_weibo(weibo_raw, 20)
-    print(f"  微博热搜: {len(weibo_hot)} 条")
 
-    # 微博文娱 TOP10 (从微博筛选)
-    weibo_ent = filter_by_keywords(weibo_raw, ENT_KEYWORDS, normalize_weibo, 10)
-    print(f"  微博文娱: {len(weibo_ent)} 条 (筛选自微博)")
+    # 微博文娱 TOP10: tophub 优先，fallback 到多源关键词匹配
+    if len(tophub_ent) >= 5:
+        weibo_ent = normalize_tophub(tophub_ent, 10)
+        ent_source = "tophub"
+    else:
+        print("  tophub 文娱数据不足，fallback 到关键词匹配...")
+        ent_sources = [
+            {"items": weibo_raw, "normalizer": normalize_weibo, "label": "微博"},
+            {"items": toutiao_raw, "normalizer": normalize_toutiao, "label": "头条"},
+            {"items": baidu_raw, "normalizer": normalize_baidu, "label": "百度"},
+        ]
+        weibo_ent = multi_source_filter(ent_sources, ENT_KEYWORDS, 10)
+        ent_source = "多源关键词"
+    print(f"  微博文娱: {len(weibo_ent)} 条 ({ent_source})")
 
-    # 微博科技 TOP10 (从微博筛选)
-    weibo_tech = filter_by_keywords(weibo_raw, TECH_KEYWORDS, normalize_weibo, 10)
-    print(f"  微博科技: {len(weibo_tech)} 条 (筛选自微博)")
+    # 微博科技 TOP10: 多源关键词匹配
+    tech_sources = [
+        {"items": weibo_raw, "normalizer": normalize_weibo, "label": "微博"},
+        {"items": toutiao_raw, "normalizer": normalize_toutiao, "label": "头条"},
+        {"items": baidu_raw, "normalizer": normalize_baidu, "label": "百度"},
+        {"items": itnews_raw, "normalizer": normalize_itnews, "label": "IT资讯"},
+    ]
+    weibo_tech = multi_source_filter(tech_sources, TECH_KEYWORDS, 10)
+    print(f"  微博科技: {len(weibo_tech)} 条 (多源关键词匹配)")
 
-    # 3. 组装看板（顺序：第一行4个，第二行4个）
+    # 3. 组装看板
     boards = [
         # 第一行
         {
