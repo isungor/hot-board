@@ -303,16 +303,15 @@ function formatHot(val) {
 
 function buildBoardHTML(id, logo, name, badge, color, items) {
   const maxHot = items.length > 0 ? Math.max(...items.map(i => i.hot_num || 0), 1) : 1;
-  const hasAnyHot = items.some(i => (i.hot_num || 0) > 0);
-  // 如果没有任何热度值，用排名反向生成相对热度（第1名=100%）
-  if (!hasAnyHot && items.length > 1) {
+  // 始终计算排名相对热度作为 fallback
+  if (items.length > 1) {
     items.forEach((item, idx) => { item._relPct = Math.round((items.length - idx) / items.length * 100); });
   }
   const itemsHTML = items.length === 0
     ? `      <div class="empty-tip">当前时段暂无相关话题</div>\n`
     : items.map(item => {
     const { rank, title: t, url, hot, hot_num } = item;
-    const pct = hasAnyHot ? Math.round((hot_num || 0) / maxHot * 100) : (item._relPct || 0);
+    const pct = (hot_num || 0) > 0 ? Math.round(hot_num / maxHot * 100) : (item._relPct || 0);
     const rc = rank <= 3 ? 'rank-top' : rank <= 10 ? 'rank-accent' : 'rank-normal';
     const safeUrl = (url || '#').replace(/'/g, '&#39;');
     const safeTitle = t.replace(/</g, '&lt;').replace(/>/g, '&gt;');
