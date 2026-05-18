@@ -6,7 +6,7 @@
  * 数据源:
  *   60s API: dongchedi / toutiao / douyin / weibo / it-news / baidu/hot
  *   汽车之家: newshotrankh5list (H5 今日实时热点榜)
- *   tophub:  微博文娱榜 (带重试 + fallback)
+ *   tophub:  微博文娱榜 / 新浪汽车热搜榜 (带重试 + fallback)
  */
 
 const https = require('https');
@@ -15,6 +15,7 @@ const fs = require('fs');
 const API_BASE = 'https://60s.viki.moe/v2';
 const AUTOHOME_API = 'https://news.app.autohome.com.cn/news_v10.0.0/news/newshotrankh5list';
 const TOPHUB_ENT_NODE = '/n/3QeLwJEd7k';  // 微博文娱榜
+const TOPHUB_AUTO_NODE = '/n/aEdZbrkdrO'; // 新浪汽车热搜榜
 const TOPHUB_BASE = 'https://tophub.today';
 const TIMEOUT = 15000;
 
@@ -458,6 +459,11 @@ async function main() {
   const tophubEnt = await fetchTopHub(TOPHUB_ENT_NODE, 2);
   console.log(`  tophub 文娱: ${tophubEnt.length} 条`);
 
+  // 抓取 tophub 新浪汽车热搜榜（带重试）
+  console.log('[抓取] tophub 新浪汽车热搜榜...');
+  const tophubAuto = await fetchTopHub(TOPHUB_AUTO_NODE, 2);
+  console.log(`  tophub 汽车: ${tophubAuto.length} 条`);
+
   // ===== 数据处理 =====
   console.log('\n[处理] 组装看板数据...');
 
@@ -469,22 +475,30 @@ async function main() {
   const dcdHot = normalizeDcd(dcd, 10);
   console.log(`  懂车帝热点榜: ${dcdHot.length} 条`);
 
-  // 微博汽车热榜：多源关键词匹配（微博+头条+百度+抖音+IT资讯）+ 汽车之家补充
-  const autoSources = [
-    { items: weibo, normalizer: normalizeWeibo, label: '微博' },
-    { items: toutiao, normalizer: normalizeToutiao, label: '头条' },
-    { items: baidu, normalizer: normalizeBaidu, label: '百度' },
-    { items: douyin, normalizer: normalizeDouyin, label: '抖音' },
-    { items: itnews, normalizer: normalizeItNews, label: 'IT资讯' },
-  ];
-  let wbAuto = multiSourceFilter(autoSources, WEIBO_AUTO_KW, 10);
-  // 多源不够10条时，用汽车之家热榜补充（去重）
-  if (wbAuto.length < 10 && ahHot.length > 0) {
-    const existTitles = new Set(wbAuto.map(i => i.title));
-    const ahSupplement = normalizeAutohome(ahHot, 10).filter(i => !existTitles.has(i.title));
-    wbAuto = [...wbAuto, ...ahSupplement].slice(0, 10).map((item, i) => ({ ...item, rank: i + 1 }));
+  // 微博汽车热榜：tophub 新浪汽车热搜为主，fallback 多源关键词 + 汽车之家补充
+  let wbAuto, autoSource;
+  if (tophubAuto.length >= 5) {
+    wbAuto = normalizeTopHub(tophubAuto, 10);
+    autoSource = 'tophub';
+  } else {
+    console.log('  tophub 汽车数据不足，fallback 到多源关键词...');
+    const autoSources = [
+      { items: weibo, normalizer: normalizeWeibo, label: '微博' },
+      { items: toutiao, normalizer: normalizeToutiao, label: '头条' },
+      { items: baidu, normalizer: normalizeBaidu, label: '百度' },
+      { items: douyin, normalizer: normalizeDouyin, label: '抖音' },
+      { items: itnews, normalizer: normalizeItNews, label: 'IT资讯' },
+    ];
+    wbAuto = multiSourceFilter(autoSources, WEIBO_AUTO_KW, 10);
+    // 多源不够10条时，用汽车之家热榜补充（去重）
+    if (wbAuto.length < 10 && ahHot.length > 0) {
+      const existTitles = new Set(wbAuto.map(i => i.title));
+      const ahSupplement = normalizeAutohome(ahHot, 10).filter(i => !existTitles.has(i.title));
+      wbAuto = [...wbAuto, ...ahSupplement].slice(0, 10).map((item, i) => ({ ...item, rank: i + 1 }));
+    }
+    autoSource = '多源+汽车之家补充';
   }
-  console.log(`  微博汽车热榜: ${wbAuto.length} 条 (多源+汽车之家补充)`);
+  console.log(`  微博汽车热榜: ${wbAuto.length} 条 (${autoSource})`);
 
   // 今日头条热榜 TOP20
   const ttHot = normalizeToutiao(toutiao, 20);
