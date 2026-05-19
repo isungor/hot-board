@@ -364,7 +364,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue"
 .board-name{font-size:14px;font-weight:700;flex:1;color:var(--text)}
 .badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;letter-spacing:.3px;white-space:nowrap}
 .list{flex:1;padding:4px 6px 8px;overflow-y:auto;max-height:520px}
-.item{display:flex;align-items:flex-start;gap:8px;padding:6px;border-radius:8px;cursor:pointer;transition:background .15s}
+.item{display:flex;align-items:flex-start;gap:8px;padding:6px;border-radius:8px;cursor:pointer;transition:background .15s;min-height:38px}
 .item:hover{background:rgba(0,0,0,.03)}
 @media(prefers-color-scheme:dark){.item:hover{background:rgba(255,255,255,.03)}}
 .rank{min-width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;border-radius:6px;margin-top:2px;flex-shrink:0}
