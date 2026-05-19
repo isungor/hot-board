@@ -301,7 +301,7 @@ function formatHot(val) {
 
 // ========== HTML 生成 ==========
 
-function buildBoardHTML(id, logo, name, badge, color, items) {
+function buildBoardHTML(id, logo, name, badge, color, items, hideHotNum) {
   const maxHot = items.length > 0 ? Math.max(...items.map(i => i.hot_num || 0), 1) : 1;
   // 始终计算排名相对热度作为 fallback
   if (items.length > 1) {
@@ -315,13 +315,13 @@ function buildBoardHTML(id, logo, name, badge, color, items) {
     const rc = rank <= 3 ? 'rank-top' : rank <= 10 ? 'rank-accent' : 'rank-normal';
     const safeUrl = (url || '#').replace(/'/g, '&#39;');
     const safeTitle = t.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const hotNumHTML = hideHotNum ? '' : `\n            <span class="hot-num">${formatHot(hot)}</span>`;
     return `      <div class="item" onclick="window.open('${safeUrl}','_blank')">
         <div class="rank ${rc}">${rank}</div>
         <div class="item-body">
           <a class="item-title" href="${safeUrl}" target="_blank" rel="noopener">${safeTitle}</a>
           <div class="item-foot">
-            <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:#d1d5db"></div></div>
-            <span class="hot-num">${formatHot(hot)}</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:#d1d5db"></div></div>${hotNumHTML}
           </div>
         </div>
       </div>`;
@@ -341,7 +341,7 @@ ${itemsHTML}
 
 function generateHTML(boards) {
   const updateTime = formatBJ(nowBJ());
-  const boardsHTML = boards.map(b => buildBoardHTML(b.id, b.logo, b.name, b.badge, b.color, b.items)).join('\n');
+  const boardsHTML = boards.map(b => buildBoardHTML(b.id, b.logo, b.name, b.badge, b.color, b.items, b.hideHotNum)).join('\n');
   return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -519,7 +519,7 @@ async function fetchAndGenerate() {
     { id: 'autohome-hot', logo: 'https://www.autohome.com.cn/favicon.ico', name: '汽车之家', badge: '热榜',     color: '#3b82f6', items: autohomeHot },
     { id: 'dcd-hot',      logo: 'https://icon.horse/icon/www.dongchedi.com', name: '懂车帝',   badge: '热点榜',   color: '#eab308', items: dcdHot },
     { id: 'wb-auto',      logo: 'https://weibo.com/favicon.ico',           name: '新浪微博', badge: '汽车热榜', color: '#e17055', items: wbAuto },
-    { id: 'tt-auto',      logo: 'https://www.toutiao.com/favicon.ico',     name: '今日头条', badge: '汽车热榜', color: '#F85959', items: ttAuto },
+    { id: 'tt-auto',      logo: 'https://www.toutiao.com/favicon.ico',     name: '今日头条', badge: '汽车热榜', color: '#F85959', items: ttAuto, hideHotNum: true },
     // 第二行
     { id: 'tt-hot',       logo: 'https://www.toutiao.com/favicon.ico',     name: '今日头条', badge: '头条热榜', color: '#ff4757', items: ttHot },
     { id: 'dy-hot',       logo: 'https://www.douyin.com/favicon.ico',      name: '抖音',     badge: '热榜',     color: '#1a1a2e', items: dyHot },
