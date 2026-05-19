@@ -218,11 +218,12 @@
         var su = (item.url || '#').replace(/'/g, '&#39;');
         var st = (item.title || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         var hotDisplay = fmtHot(item.hot);
+        var hotNumSpan = cfg.hideHotNum ? '' : '<span class="hot-num">' + hotDisplay + '</span>';
         html += '<div class="item" onclick="window.open(\'' + su + '\',\'_blank\')">' +
           '<div class="rank ' + rc + '">' + item.rank + '</div>' +
           '<div class="item-body"><a class="item-title" href="' + su + '" target="_blank" rel="noopener">' + st + '</a>' +
           '<div class="item-foot"><div class="bar-wrap"><div class="bar-fill" style="width:' + pct + '%;background:#d1d5db"></div></div>' +
-          '<span class="hot-num">' + hotDisplay + '</span></div></div></div>';
+          hotNumSpan + '</div></div></div>';
       }
     }
     return '<div class="board" id="' + cfg.id + '">' +
@@ -265,6 +266,7 @@
             {items:it,norm:normIt}
           ], AUTO_KW, 10) },
         { id:'tt-auto', logo:'https://www.toutiao.com/favicon.ico', name:'今日头条', badge:'汽车热榜', color:'#F85959',
+          hideHotNum: true,
           items: thTtAuto.length >= 5 ? thTtAuto.slice(0,10) : multiFilter([
             {items:tt,norm:normGeneric},{items:wb,norm:normGeneric},{items:dy,norm:normGeneric},
             {items:dcd,norm:normDcd},{items:it,norm:normIt}
