@@ -1,6 +1,8 @@
 name: Update Hot Board
 
 on:
+  push:
+    branches: [main]
   schedule:
     # UTC 2:30 = 北京 10:30  |  UTC 7:00 = 北京 15:00
     - cron: '30 2 * * *'
