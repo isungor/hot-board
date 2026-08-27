@@ -11,6 +11,9 @@ const TOPHUB_ENT_NODE = '/n/3QeLwJEd7k';  // 微博文娱榜
 const TOPHUB_AUTO_NODE = '/n/aEdZbrkdrO'; // 新浪汽车热搜榜
 const TOPHUB_DCD_NODE = '/n/7GdaA8kdQy';  // 懂车帝热搜榜
 const TOPHUB_TT_AUTO_NODE = '/n/Q0orLpDd8B'; // 今日头条汽车热榜
+const TOPHUB_TT_NODE = '/n/x9ozB4KoXb';   // 今日头条头条热榜（60s API 被屏蔽时的兜底）
+const TOPHUB_DY_NODE = '/n/K7GdaMgdQy';   // 抖音热点榜（兜底）
+const TOPHUB_WB_NODE = '/n/KqndgxeLl9';   // 微博热搜榜（兜底）
 const TOPHUB_BASE = 'https://tophub.today';
 const TIMEOUT = 15000;
 
@@ -417,15 +420,19 @@ async function fetchAndGenerate() {
   console.log(`  汽车之家: ${ahHot.length} | 懂车帝: ${dcd.length} | 头条: ${toutiao.length} | 抖音: ${douyin.length}`);
   console.log(`  微博: ${weibo.length} | IT资讯: ${itnews.length}`);
 
-  // 并行抓取 tophub 四个榜单
-  console.log('[抓取] tophub 四个榜单...');
-  const [tophubEnt, tophubAuto, tophubDcd, tophubTtAuto] = await Promise.all([
+  // 并行抓取 tophub 榜单（4 个常规 + 3 个 60s API 兜底）
+  console.log('[抓取] tophub 榜单...');
+  const [tophubEnt, tophubAuto, tophubDcd, tophubTtAuto, tophubTt, tophubDy, tophubWb] = await Promise.all([
     fetchTopHub(TOPHUB_ENT_NODE, 2),
     fetchTopHub(TOPHUB_AUTO_NODE, 2),
     fetchTopHub(TOPHUB_DCD_NODE, 2),
     fetchTopHub(TOPHUB_TT_AUTO_NODE, 2),
+    fetchTopHub(TOPHUB_TT_NODE, 2),
+    fetchTopHub(TOPHUB_DY_NODE, 2),
+    fetchTopHub(TOPHUB_WB_NODE, 2),
   ]);
   console.log(`  tophub 文娱: ${tophubEnt.length} | 汽车: ${tophubAuto.length} | 懂车帝: ${tophubDcd.length} | 头条汽车: ${tophubTtAuto.length} 条`);
+  console.log(`  tophub 兜底 头条: ${tophubTt.length} | 抖音: ${tophubDy.length} | 微博热搜: ${tophubWb.length} 条`);
 
   // ===== 数据处理 =====
 
@@ -488,14 +495,50 @@ async function fetchAndGenerate() {
   enrichHotFromAPI(dcdHot, dcd, 'url');
   enrichHotFromAPI(wbAuto, [...weibo, ...toutiao, ...douyin, ...itnews], 'link');
 
-  // 今日头条热榜 TOP20
-  const ttHot = normalizeToutiao(toutiao, 20);
+  // 今日头条热榜 TOP20：60s API 优先，被屏蔽时 fallback 到 tophub
+  let ttHot, ttHotSource;
+  if (toutiao.length >= 5) {
+    ttHot = normalizeToutiao(toutiao, 20);
+    ttHotSource = '60s API';
+  } else if (tophubTt.length >= 5) {
+    console.log('  60s API 头条数据缺失，fallback 到 tophub...');
+    ttHot = normalizeTopHub(tophubTt, 20);
+    ttHotSource = 'tophub';
+  } else {
+    ttHot = [];
+    ttHotSource = '无数据';
+  }
+  console.log(`  今日头条热榜: ${ttHot.length} 条 (${ttHotSource})`);
 
-  // 抖音热榜 TOP20
-  const dyHot = normalizeDouyin(douyin, 20);
+  // 抖音热榜 TOP20：60s API 优先，被屏蔽时 fallback 到 tophub
+  let dyHot, dyHotSource;
+  if (douyin.length >= 5) {
+    dyHot = normalizeDouyin(douyin, 20);
+    dyHotSource = '60s API';
+  } else if (tophubDy.length >= 5) {
+    console.log('  60s API 抖音数据缺失，fallback 到 tophub...');
+    dyHot = normalizeTopHub(tophubDy, 20);
+    dyHotSource = 'tophub';
+  } else {
+    dyHot = [];
+    dyHotSource = '无数据';
+  }
+  console.log(`  抖音热榜: ${dyHot.length} 条 (${dyHotSource})`);
 
-  // 微博热搜 TOP20
-  const wbHot = normalizeWeibo(weibo, 20);
+  // 微博热搜 TOP20：60s API 优先，被屏蔽时 fallback 到 tophub
+  let wbHot, wbHotSource;
+  if (weibo.length >= 5) {
+    wbHot = normalizeWeibo(weibo, 20);
+    wbHotSource = '60s API';
+  } else if (tophubWb.length >= 5) {
+    console.log('  60s API 微博数据缺失，fallback 到 tophub...');
+    wbHot = normalizeTopHub(tophubWb, 20);
+    wbHotSource = 'tophub';
+  } else {
+    wbHot = [];
+    wbHotSource = '无数据';
+  }
+  console.log(`  微博热搜: ${wbHot.length} 条 (${wbHotSource})`);
 
   // 微博文娱 TOP10: tophub 优先，fallback 到多源关键词匹配
   let wbEnt, entSource;
