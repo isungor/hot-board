@@ -43,6 +43,7 @@
   ];
 
   // 懂车帝官方热搜榜（launcher 免登录接口）：直连失败走 CORS 代理
+  // ⚠️ 2026-09-03 实测：返回往年同期旧词（海豹DM-i上市、斯柯达速派谍照等），仅作 tophub 文章榜失败时的兜底
   var DCD_LAUNCH_API = 'https://www.dongchedi.com/motor/searchpage/launcher/main/v1/?aid=1839&app_name=auto_web_pc';
   function fetchDcdOfficial() {
     function parse(j) {
@@ -290,18 +291,19 @@
       fetchTopHub(TH_NODES.auto),
       fetchTopHub(TH_NODES.dcd),
       fetchTopHub(TH_NODES.ttAuto),
-      fetchDcdOfficial(),
     ]).then(function(results) {
       var dcd = results[0], tt = results[1], dy = results[2], wb = results[3];
       var it = results[4], ah = results[5];
       var thEnt = results[6], thAuto = results[7], thDcd = results[8], thTtAuto = results[9];
-      var dcdOfficial = results[10];
+      // tophub 懂车帝文章榜不足 5 条时才请求官方 launcher（其内容为往年旧词，避免常态使用）
+      var launcherPromise = thDcd.length >= 5 ? Promise.resolve([]) : fetchDcdOfficial();
 
-      var boards = [
+      return launcherPromise.then(function(dcdOfficial) {
+        var boards = [
         { id:'autohome-hot', logo:'https://www.autohome.com.cn/favicon.ico', name:'汽车之家', badge:'热榜', color:'#3b82f6', items: ah },
-        { id:'dcd-hot', logo:'https://icon.horse/icon/www.dongchedi.com', name:'懂车帝', badge:'热搜', color:'#eab308',
-          items: dcdOfficial.length >= 5 ? dcdOfficial.slice(0,10)
-                : (thDcd.length >= 5 ? thDcd.slice(0,10) : normDcd(dcd,10)) },
+        { id:'dcd-hot', logo:'https://icon.horse/icon/www.dongchedi.com', name:'懂车帝', badge:'热榜', color:'#eab308',
+          items: thDcd.length >= 5 ? thDcd.slice(0,10)
+                : (dcdOfficial.length >= 5 ? dcdOfficial.slice(0,10) : normDcd(dcd,10)) },
         { id:'wb-auto', logo:'https://weibo.com/favicon.ico', name:'新浪微博', badge:'汽车热榜', color:'#e17055',
           items: thAuto.length >= 5 ? thAuto.slice(0,10) : multiFilter([
             {items:wb,norm:normGeneric},{items:tt,norm:normGeneric},{items:dy,norm:normGeneric},
@@ -322,8 +324,9 @@
           ], ENT_KW, 10) },
       ];
 
-      var boardsEl = document.querySelector('.boards');
-      if (boardsEl) boardsEl.innerHTML = boards.map(buildBoard).join('\n');
+        var boardsEl = document.querySelector('.boards');
+        if (boardsEl) boardsEl.innerHTML = boards.map(buildBoard).join('\n');
+      });
     }).catch(function(e) {
       console.error('刷新失败:', e);
     }).finally(function() {
