@@ -9,13 +9,14 @@ const API_BASE = 'https://60s.viki.moe/v2';
 const AUTOHOME_API = 'https://news.app.autohome.com.cn/news_v10.0.0/news/newshotrankh5list';
 const TOPHUB_ENT_NODE = '/n/3QeLwJEd7k';  // 微博文娱榜
 const TOPHUB_AUTO_NODE = '/n/aEdZbrkdrO'; // 新浪汽车热搜榜
-const TOPHUB_DCD_NODE = '/n/RrvW7XDv5z';  // 懂车帝文章排行榜（仅当官方热搜接口不可用时兜底）
+const TOPHUB_DCD_NODE = '/n/RrvW7XDv5z';  // 懂车帝文章排行榜（主源；2026-09-03 用户确认官方 launcher 热搜为往年旧数据，回退到此榜）
 const TOPHUB_TT_AUTO_NODE = '/n/Q0orLpDd8B'; // 今日头条汽车热榜
 const TOPHUB_TT_NODE = '/n/x9ozB4KoXb';   // 今日头条头条热榜（60s API 被屏蔽时的兜底）
 const TOPHUB_DY_NODE = '/n/K7GdaMgdQy';   // 抖音热点榜（兜底）
 const TOPHUB_WB_NODE = '/n/KqndgxeLl9';   // 微博热搜榜（兜底）
 const TOPHUB_BASE = 'https://tophub.today';
 // 懂车帝官方搜索热搜接口（免登录，2026-09-03 找到；dongchedi.com/news 已登录拦截无法用 __NEXT_DATA__ 方式抓取）
+// ⚠️ 2026-09-03 实测：返回的是往年同期旧词（海豹DM-i上市、斯柯达速派谍照等），仅作 tophub 失败时的兜底
 const DCD_LAUNCH_API = 'https://www.dongchedi.com/motor/searchpage/launcher/main/v1/?aid=1839&app_name=auto_web_pc';
 const TIMEOUT = 15000;
 
@@ -452,10 +453,6 @@ async function fetchAndGenerate() {
   console.log(`  汽车之家: ${ahHot.length} | 懂车帝: ${dcd.length} | 头条: ${toutiao.length} | 抖音: ${douyin.length}`);
   console.log(`  微博: ${weibo.length} | IT资讯: ${itnews.length}`);
 
-  // 懂车帝官方热搜榜（launcher 接口，免登录）
-  const dcdOfficial = await fetchDcdHotSearch();
-  console.log(`  懂车帝官方热搜: ${dcdOfficial.length} 条`);
-
   // 并行抓取 tophub 榜单（4 个常规 + 3 个 60s API 兜底）
   console.log('[抓取] tophub 榜单...');
   const [tophubEnt, tophubAuto, tophubDcd, tophubTtAuto, tophubTt, tophubDy, tophubWb] = await Promise.all([
@@ -476,20 +473,25 @@ async function fetchAndGenerate() {
   const autohomeHot = normalizeAutohome(ahHot, 10);
   console.log(`  汽车之家热榜: ${autohomeHot.length} 条`);
 
-  // 懂车帝热搜 TOP10：官方 launcher 热搜榜优先 → tophub 文章榜 → 60s API
+  // 懂车帝 TOP10：tophub 文章排行榜优先（2026-09-03 用户确认官方 launcher 热搜为往年旧词）→ 官方 launcher 兜底 → 60s API
   let dcdHot, dcdSource;
-  if (dcdOfficial.length >= 5) {
-    dcdHot = dcdOfficial.slice(0, 10);
-    dcdSource = '官方热搜';
-  } else if (tophubDcd.length >= 5) {
+  if (tophubDcd.length >= 5) {
     dcdHot = normalizeTopHub(tophubDcd, 10);
-    dcdSource = 'tophub';
+    dcdSource = 'tophub 文章榜';
   } else {
-    console.log('  官方与 tophub 懂车帝数据均不足，fallback 到 60s API...');
-    dcdHot = normalizeDcd(dcd, 10);
-    dcdSource = '60s API';
+    // tophub 不可用时才请求官方 launcher 兜底
+    console.log('  tophub 懂车帝文章榜不可用，尝试官方 launcher...');
+    const dcdOfficial = await fetchDcdHotSearch();
+    if (dcdOfficial.length >= 5) {
+      dcdHot = dcdOfficial.slice(0, 10);
+      dcdSource = '官方 launcher';
+    } else {
+      console.log('  官方 launcher 亦不足，fallback 到 60s API...');
+      dcdHot = normalizeDcd(dcd, 10);
+      dcdSource = '60s API';
+    }
   }
-  console.log(`  懂车帝热搜: ${dcdHot.length} 条 (${dcdSource})`);
+  console.log(`  懂车帝热榜: ${dcdHot.length} 条 (${dcdSource})`);
 
   // 微博汽车热榜：tophub 新浪汽车热搜为主，fallback 多源关键词 + 汽车之家补充
   let wbAuto, autoSource;
@@ -599,7 +601,7 @@ async function fetchAndGenerate() {
   const boards = [
     // 第一行
     { id: 'autohome-hot', logo: 'https://www.autohome.com.cn/favicon.ico', name: '汽车之家', badge: '热榜',     color: '#3b82f6', items: autohomeHot },
-    { id: 'dcd-hot',      logo: 'https://icon.horse/icon/www.dongchedi.com', name: '懂车帝',   badge: '热搜',     color: '#eab308', items: dcdHot },
+    { id: 'dcd-hot',      logo: 'https://icon.horse/icon/www.dongchedi.com', name: '懂车帝',   badge: '热榜',     color: '#eab308', items: dcdHot },
     { id: 'wb-auto',      logo: 'https://weibo.com/favicon.ico',           name: '新浪微博', badge: '汽车热榜', color: '#e17055', items: wbAuto },
     { id: 'tt-auto',      logo: 'https://www.toutiao.com/favicon.ico',     name: '今日头条', badge: '汽车热榜', color: '#F85959', items: ttAuto, hideHotNum: true },
     // 第二行
