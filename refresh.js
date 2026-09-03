@@ -42,6 +42,45 @@
     function(u) { return 'https://corsproxy.io/?' + encodeURIComponent(u); },
   ];
 
+  // 懂车帝官方热搜榜（launcher 免登录接口）：直连失败走 CORS 代理
+  var DCD_LAUNCH_API = 'https://www.dongchedi.com/motor/searchpage/launcher/main/v1/?aid=1839&app_name=auto_web_pc';
+  function fetchDcdOfficial() {
+    function parse(j) {
+      var boards = (j && j.data && Array.isArray(j.data.rank_board)) ? j.data.rank_board : [];
+      var hotBoard = null;
+      for (var i = 0; i < boards.length; i++) {
+        if (boards[i].rank_name === '热搜榜' || boards[i].rank_code === 0) { hotBoard = boards[i]; break; }
+      }
+      var tops = (hotBoard && Array.isArray(hotBoard.tops)) ? hotBoard.tops : [];
+      var out = [];
+      for (var k = 0; k < tops.length; k++) {
+        var t = tops[k].title;
+        if (!t) continue;
+        out.push({ rank: out.length + 1, title: t, url: 'https://www.dongchedi.com/search?keyword=' + encodeURIComponent(t), hot: '', hot_num: 0 });
+      }
+      return out;
+    }
+    return fetch(DCD_LAUNCH_API, { mode: 'cors' }).then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(parse).catch(function() {
+      var proxyIdx = 0;
+      function tryProxy() {
+        if (proxyIdx >= CORS_PROXIES.length) return [];
+        var proxyUrl = CORS_PROXIES[proxyIdx](DCD_LAUNCH_API);
+        return fetch(proxyUrl).then(function(r) {
+          if (!r.ok) throw new Error('proxy HTTP ' + r.status);
+          return r.json();
+        }).then(parse).catch(function(e) {
+          proxyIdx++;
+          console.warn('fetchDcdOfficial proxy failed:', e.message);
+          return tryProxy();
+        });
+      }
+      return tryProxy();
+    });
+  }
+
   function fetchTopHub(node) {
     var url = TOPHUB + node;
     // 先尝试直连（同域或 CORS 允许时）
@@ -251,15 +290,18 @@
       fetchTopHub(TH_NODES.auto),
       fetchTopHub(TH_NODES.dcd),
       fetchTopHub(TH_NODES.ttAuto),
+      fetchDcdOfficial(),
     ]).then(function(results) {
       var dcd = results[0], tt = results[1], dy = results[2], wb = results[3];
       var it = results[4], ah = results[5];
       var thEnt = results[6], thAuto = results[7], thDcd = results[8], thTtAuto = results[9];
+      var dcdOfficial = results[10];
 
       var boards = [
         { id:'autohome-hot', logo:'https://www.autohome.com.cn/favicon.ico', name:'汽车之家', badge:'热榜', color:'#3b82f6', items: ah },
-        { id:'dcd-hot', logo:'https://icon.horse/icon/www.dongchedi.com', name:'懂车帝', badge:'热榜', color:'#eab308',
-          items: thDcd.length >= 5 ? thDcd.slice(0,10) : normDcd(dcd,10) },
+        { id:'dcd-hot', logo:'https://icon.horse/icon/www.dongchedi.com', name:'懂车帝', badge:'热搜', color:'#eab308',
+          items: dcdOfficial.length >= 5 ? dcdOfficial.slice(0,10)
+                : (thDcd.length >= 5 ? thDcd.slice(0,10) : normDcd(dcd,10)) },
         { id:'wb-auto', logo:'https://weibo.com/favicon.ico', name:'新浪微博', badge:'汽车热榜', color:'#e17055',
           items: thAuto.length >= 5 ? thAuto.slice(0,10) : multiFilter([
             {items:wb,norm:normGeneric},{items:tt,norm:normGeneric},{items:dy,norm:normGeneric},
