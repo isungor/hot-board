@@ -18,7 +18,7 @@
   // ========== API 配置 ==========
   var API_BASE = 'https://60s.viki.moe/v2';
   var TOPHUB = 'https://tophub.today';
-  var TH_NODES = { ent: '/n/3QeLwJEd7k', auto: '/n/aEdZbrkdrO', dcd: '/n/7GdaA8kdQy', ttAuto: '/n/Q0orLpDd8B' };
+  var TH_NODES = { ent: '/n/3QeLwJEd7k', auto: '/n/aEdZbrkdrO', dcd: '/n/RrvW7XDv5z', ttAuto: '/n/Q0orLpDd8B' };
   var AH_API = 'https://news.app.autohome.com.cn/news_v10.0.0/news/newshotrankh5list';
 
   // ========== 关键词 ==========
@@ -258,7 +258,7 @@
 
       var boards = [
         { id:'autohome-hot', logo:'https://www.autohome.com.cn/favicon.ico', name:'汽车之家', badge:'热榜', color:'#3b82f6', items: ah },
-        { id:'dcd-hot', logo:'https://icon.horse/icon/www.dongchedi.com', name:'懂车帝', badge:'热点榜', color:'#eab308',
+        { id:'dcd-hot', logo:'https://icon.horse/icon/www.dongchedi.com', name:'懂车帝', badge:'热榜', color:'#eab308',
           items: thDcd.length >= 5 ? thDcd.slice(0,10) : normDcd(dcd,10) },
         { id:'wb-auto', logo:'https://weibo.com/favicon.ico', name:'新浪微博', badge:'汽车热榜', color:'#e17055',
           items: thAuto.length >= 5 ? thAuto.slice(0,10) : multiFilter([
