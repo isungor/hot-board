@@ -9,7 +9,7 @@ const API_BASE = 'https://60s.viki.moe/v2';
 const AUTOHOME_API = 'https://news.app.autohome.com.cn/news_v10.0.0/news/newshotrankh5list';
 const TOPHUB_ENT_NODE = '/n/3QeLwJEd7k';  // 微博文娱榜
 const TOPHUB_AUTO_NODE = '/n/aEdZbrkdrO'; // 新浪汽车热搜榜
-const TOPHUB_DCD_NODE = '/n/7GdaA8kdQy';  // 懂车帝热搜榜
+const TOPHUB_DCD_NODE = '/n/RrvW7XDv5z';  // 懂车帝文章排行榜（原"实时热搜榜" /n/7GdaA8kdQy 已停更，2026-09-03 更换）
 const TOPHUB_TT_AUTO_NODE = '/n/Q0orLpDd8B'; // 今日头条汽车热榜
 const TOPHUB_TT_NODE = '/n/x9ozB4KoXb';   // 今日头条头条热榜（60s API 被屏蔽时的兜底）
 const TOPHUB_DY_NODE = '/n/K7GdaMgdQy';   // 抖音热点榜（兜底）
@@ -440,7 +440,7 @@ async function fetchAndGenerate() {
   const autohomeHot = normalizeAutohome(ahHot, 10);
   console.log(`  汽车之家热榜: ${autohomeHot.length} 条`);
 
-  // 懂车帝热点榜 TOP10：tophub 优先，fallback 到 60s API
+  // 懂车帝热榜 TOP10：tophub 文章排行榜优先，fallback 到 60s API
   let dcdHot, dcdSource;
   if (tophubDcd.length >= 5) {
     dcdHot = normalizeTopHub(tophubDcd, 10);
@@ -450,7 +450,7 @@ async function fetchAndGenerate() {
     dcdHot = normalizeDcd(dcd, 10);
     dcdSource = '60s API';
   }
-  console.log(`  懂车帝热点榜: ${dcdHot.length} 条 (${dcdSource})`);
+  console.log(`  懂车帝热榜: ${dcdHot.length} 条 (${dcdSource})`);
 
   // 微博汽车热榜：tophub 新浪汽车热搜为主，fallback 多源关键词 + 汽车之家补充
   let wbAuto, autoSource;
@@ -560,7 +560,7 @@ async function fetchAndGenerate() {
   const boards = [
     // 第一行
     { id: 'autohome-hot', logo: 'https://www.autohome.com.cn/favicon.ico', name: '汽车之家', badge: '热榜',     color: '#3b82f6', items: autohomeHot },
-    { id: 'dcd-hot',      logo: 'https://icon.horse/icon/www.dongchedi.com', name: '懂车帝',   badge: '热点榜',   color: '#eab308', items: dcdHot },
+    { id: 'dcd-hot',      logo: 'https://icon.horse/icon/www.dongchedi.com', name: '懂车帝',   badge: '热榜',     color: '#eab308', items: dcdHot },
     { id: 'wb-auto',      logo: 'https://weibo.com/favicon.ico',           name: '新浪微博', badge: '汽车热榜', color: '#e17055', items: wbAuto },
     { id: 'tt-auto',      logo: 'https://www.toutiao.com/favicon.ico',     name: '今日头条', badge: '汽车热榜', color: '#F85959', items: ttAuto, hideHotNum: true },
     // 第二行
