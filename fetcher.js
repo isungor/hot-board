@@ -15,6 +15,8 @@ const TOPHUB_TT_NODE = '/n/x9ozB4KoXb';   // 今日头条头条热榜（60s API 
 const TOPHUB_DY_NODE = '/n/K7GdaMgdQy';   // 抖音热点榜（兜底）
 const TOPHUB_WB_NODE = '/n/KqndgxeLl9';   // 微博热搜榜（兜底）
 const TOPHUB_BASE = 'https://tophub.today';
+// uapis 全网热榜聚合 API（免费免鉴权，CORS 全开放，实时快照，2026-09-08 接入微博总榜）
+const UAPIS_API = 'https://uapis.cn/api/v1/misc/hotboard';
 // 懂车帝官方搜索热搜接口（免登录，2026-09-03 找到；dongchedi.com/news 已登录拦截无法用 __NEXT_DATA__ 方式抓取）
 // ⚠️ 2026-09-03 实测：返回的是往年同期旧词（海豹DM-i上市、斯柯达速派谍照等），仅作 tophub 失败时的兜底
 const DCD_LAUNCH_API = 'https://www.dongchedi.com/motor/searchpage/launcher/main/v1/?aid=1839&app_name=auto_web_pc';
@@ -96,6 +98,29 @@ function fetchDcdHotSearch() {
             hot: '', hot_num: 0,
           })).filter(it => it.title);
           resolve(items);
+        } catch (e) { resolve([]); }
+      });
+    });
+    req.on('error', () => resolve([]));
+    req.on('timeout', () => { req.destroy(); resolve([]); });
+  });
+}
+
+// uapis 热榜抓取（免费免鉴权，返回实时快照）：type=weibo/douyin/toutiao/baidu/zhihu/bilibili 等
+function fetchUapis(type) {
+  return new Promise((resolve) => {
+    const url = `${UAPIS_API}?type=${encodeURIComponent(type)}`;
+    const req = https.get(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36' },
+      timeout: TIMEOUT,
+    }, res => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => {
+        try {
+          const j = JSON.parse(data);
+          const list = (j && Array.isArray(j.list)) ? j.list : [];
+          resolve(list);
         } catch (e) { resolve([]); }
       });
     });
@@ -268,6 +293,13 @@ function normalizeTopHub(items, limit = 10) {
   return items.slice(0, limit).map(d => ({
     rank: d.rank, title: d.title, url: d.url,
     hot: d.hot, hot_num: d.hot_num,
+  }));
+}
+// uapis 数据标准化：{title, hot_value, url, extra} → 看板条目
+function normalizeUapis(items, limit = 20) {
+  return items.slice(0, limit).map((d, i) => ({
+    rank: d.index || i + 1, title: d.title || '', url: d.url || '',
+    hot: d.hot_value != null ? String(d.hot_value) : '', hot_num: parseInt(d.hot_value) || 0,
   }));
 }
 
@@ -467,6 +499,10 @@ async function fetchAndGenerate() {
   console.log(`  tophub 文娱: ${tophubEnt.length} | 汽车: ${tophubAuto.length} | 懂车帝: ${tophubDcd.length} | 头条汽车: ${tophubTtAuto.length} 条`);
   console.log(`  tophub 兜底 头条: ${tophubTt.length} | 抖音: ${tophubDy.length} | 微博热搜: ${tophubWb.length} 条`);
 
+  // uapis 实时微博热榜（第一优先数据源；免费免鉴权，实时快照）
+  const uapisWb = await fetchUapis('weibo');
+  console.log(`  uapis 微博实时: ${uapisWb.length} 条`);
+
   // ===== 数据处理 =====
 
   // 汽车之家热榜 TOP10
@@ -566,13 +602,16 @@ async function fetchAndGenerate() {
   }
   console.log(`  抖音热榜: ${dyHot.length} 条 (${dyHotSource})`);
 
-  // 微博热搜 TOP20：60s API 优先，被屏蔽时 fallback 到 tophub
+  // 微博热搜 TOP20：uapis 实时快照优先（2026-09-08 接入，解决 60s 在 Actions 被屏蔽导致的更新慢）→ 60s API → tophub
   let wbHot, wbHotSource;
-  if (weibo.length >= 5) {
+  if (uapisWb.length >= 5) {
+    wbHot = normalizeUapis(uapisWb, 20);
+    wbHotSource = 'uapis';
+  } else if (weibo.length >= 5) {
     wbHot = normalizeWeibo(weibo, 20);
     wbHotSource = '60s API';
   } else if (tophubWb.length >= 5) {
-    console.log('  60s API 微博数据缺失，fallback 到 tophub...');
+    console.log('  uapis/60s API 微博数据缺失，fallback 到 tophub...');
     wbHot = normalizeTopHub(tophubWb, 20);
     wbHotSource = 'tophub';
   } else {
