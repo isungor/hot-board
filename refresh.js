@@ -20,6 +20,8 @@
   var TOPHUB = 'https://tophub.today';
   var TH_NODES = { ent: '/n/3QeLwJEd7k', auto: '/n/aEdZbrkdrO', dcd: '/n/RrvW7XDv5z', ttAuto: '/n/Q0orLpDd8B' };
   var AH_API = 'https://news.app.autohome.com.cn/news_v10.0.0/news/newshotrankh5list';
+  // uapis 全网热榜聚合 API（免费免鉴权，CORS 开放，实时快照，2026-09-08 接入微博总榜）
+  var UAPIS_API = 'https://uapis.cn/api/v1/misc/hotboard';
 
   // ========== 关键词 ==========
   var AUTO_KW = ['比亚迪','特斯拉','丰田','本田','宝马','奔驰','奥迪','蔚来','理想','小鹏','吉利','长安汽车','大众汽车','大众ID','福特','保时捷','东风日产','问界','智界','享界','极氪','零跑','岚图','深蓝','哪吒','红旗','领克','奇瑞','名爵','阿维塔','高合','乐道','方程豹','捷途','宝骏','启源','星途','智己','飞凡','鸿蒙智行','小米汽车','小米SU7','小米SU','华为智驾','华为鸿蒙','华为汽车','新能源车','新能源汽车','混动车型','纯电车型','插混','增程式','充电桩','动力电池','智能驾驶','智能座舱','辅助驾驶','车机系统','智驾','油耗','车祸','追尾','试驾','提车','交车','购车','买车','燃油车','电动车','电车','越野车','摩托车','赛车','车企','造车','新势力','网约车','车险','驾考'];
@@ -34,6 +36,29 @@
         return (j.code === 200 && j.data) ? j.data : [];
       });
     }).catch(function(e) { console.warn('fetchJSON:', url, e); return []; });
+  }
+
+  // uapis 实时热榜（免鉴权 + CORS 开放，浏览器端可直接请求）
+  function fetchUapis(type) {
+    return fetch(UAPIS_API + '?type=' + encodeURIComponent(type)).then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function(j) {
+      var list = (j && Array.isArray(j.list)) ? j.list : [];
+      var out = [];
+      for (var i = 0; i < list.length; i++) {
+        var it = list[i];
+        if (!it.title) continue;
+        out.push({
+          rank: it.index || out.length + 1,
+          title: it.title,
+          url: it.url || '',
+          hot: it.hot_value != null ? String(it.hot_value) : '',
+          hot_num: parseInt(it.hot_value) || 0,
+        });
+      }
+      return out;
+    }).catch(function(e) { console.warn('fetchUapis:', type, e); return []; });
   }
 
   // CORS 代理列表（用于绕过 tophub 跨域限制）
@@ -291,10 +316,12 @@
       fetchTopHub(TH_NODES.auto),
       fetchTopHub(TH_NODES.dcd),
       fetchTopHub(TH_NODES.ttAuto),
+      fetchUapis('weibo'),
     ]).then(function(results) {
       var dcd = results[0], tt = results[1], dy = results[2], wb = results[3];
       var it = results[4], ah = results[5];
       var thEnt = results[6], thAuto = results[7], thDcd = results[8], thTtAuto = results[9];
+      var uapisWb = results[10];
       // tophub 懂车帝文章榜不足 5 条时才请求官方 launcher（其内容为往年旧词，避免常态使用）
       var launcherPromise = thDcd.length >= 5 ? Promise.resolve([]) : fetchDcdOfficial();
 
@@ -317,7 +344,8 @@
           ], AUTO_KW, 10) },
         { id:'tt-hot', logo:'https://www.toutiao.com/favicon.ico', name:'今日头条', badge:'头条热榜', color:'#ff4757', items: normGeneric(tt,20) },
         { id:'dy-hot', logo:'https://www.douyin.com/favicon.ico', name:'抖音', badge:'热榜', color:'#1a1a2e', items: normGeneric(dy,20) },
-        { id:'wb-hot', logo:'https://weibo.com/favicon.ico', name:'新浪微博', badge:'热搜榜', color:'#ff4500', items: normGeneric(wb,20) },
+        { id:'wb-hot', logo:'https://weibo.com/favicon.ico', name:'新浪微博', badge:'热搜榜', color:'#ff4500',
+          items: uapisWb.length >= 5 ? uapisWb.slice(0,20) : normGeneric(wb,20) },
         { id:'wb-ent', logo:'https://weibo.com/favicon.ico', name:'新浪微博', badge:'文娱热搜', color:'#e84393',
           items: thEnt.length >= 5 ? thEnt.slice(0,10) : multiFilter([
             {items:wb,norm:normGeneric},{items:tt,norm:normGeneric}
