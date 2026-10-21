@@ -4,6 +4,8 @@
  */
 
 const https = require('https');
+const fs = require('fs');
+const path = require('path');
 
 const API_BASE = 'https://60s.viki.moe/v2';
 const AUTOHOME_API = 'https://news.app.autohome.com.cn/news_v10.0.0/news/newshotrankh5list';
@@ -17,6 +19,10 @@ const TOPHUB_WB_NODE = '/n/KqndgxeLl9';   // 微博热搜榜（兜底）
 const TOPHUB_BASE = 'https://tophub.today';
 // uapis 全网热榜聚合 API（免费免鉴权，CORS 全开放，实时快照，2026-09-08 接入微博总榜）
 const UAPIS_API = 'https://uapis.cn/api/v1/misc/hotboard';
+// 懂车帝登录态热搜快照（公开渠道均已失效：launcher 为 2023 僵尸缓存、tophub 实时热搜节点冻结于 2026-06-30、60s 接口 500）
+// 由本地登录态抓取脚本写入，看板读取；超过 FRESH_HOURS 小时视为过期并回退 tophub 文章排行榜
+const DCD_SNAPSHOT_FILE = path.join(__dirname, 'dongchedi_hot.json');
+const DCD_SNAPSHOT_FRESH_HOURS = 24;
 // 懂车帝官方搜索热搜接口（免登录，2026-09-03 找到；dongchedi.com/news 已登录拦截无法用 __NEXT_DATA__ 方式抓取）
 // ⚠️ 2026-09-03 实测：返回的是往年同期旧词（海豹DM-i上市、斯柯达速派谍照等），仅作 tophub 失败时的兜底
 const DCD_LAUNCH_API = 'https://www.dongchedi.com/motor/searchpage/launcher/main/v1/?aid=1839&app_name=auto_web_pc';
@@ -106,6 +112,32 @@ function fetchDcdHotSearch() {
   });
 }
 
+// 读取懂车帝登录态热搜快照（dongchedi_hot.json）；过期（>24h）或无文件时返回 []
+function readDcdSnapshot() {
+  try {
+    if (!fs.existsSync(DCD_SNAPSHOT_FILE)) return [];
+    const j = JSON.parse(fs.readFileSync(DCD_SNAPSHOT_FILE, 'utf8'));
+    const items = Array.isArray(j.items) ? j.items : [];
+    const ts = Date.parse(j.captured_at);
+    if (!Number.isFinite(ts)) return [];
+    const ageHours = (Date.now() - ts) / 3600000;
+    if (ageHours > DCD_SNAPSHOT_FRESH_HOURS) {
+      console.log(`  懂车帝热搜快照已过期（${ageHours.toFixed(1)}h > ${DCD_SNAPSHOT_FRESH_HOURS}h），回退文章榜`);
+      return [];
+    }
+    console.log(`  懂车帝热搜快照: ${j.captured_at}（${ageHours.toFixed(1)}h 前）`);
+    return items.filter(it => it && it.title).slice(0, 10).map((it, i) => ({
+      rank: it.rank || i + 1,
+      title: it.title,
+      url: it.url || `https://www.dongchedi.com/search?keyword=${encodeURIComponent(it.title)}`,
+      hot: '', hot_num: 0,
+    }));
+  } catch (e) {
+    console.log('  懂车帝热搜快照读取失败:', e.message);
+    return [];
+  }
+}
+
 // uapis 热榜抓取（免费免鉴权，返回实时快照）：type=weibo/douyin/toutiao/baidu/zhihu/bilibili 等
 function fetchUapis(type) {
   return new Promise((resolve) => {
@@ -129,8 +161,7 @@ function fetchUapis(type) {
   });
 }
 
-function fetchAutohome(limit = 10) {
-  return new Promise((resolve, reject) => {
+function fetchAutohome(limit = 10) {  return new Promise((resolve, reject) => {
     const req = https.get(AUTOHOME_API, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15',
@@ -509,25 +540,23 @@ async function fetchAndGenerate() {
   const autohomeHot = normalizeAutohome(ahHot, 10);
   console.log(`  汽车之家热榜: ${autohomeHot.length} 条`);
 
-  // 懂车帝 TOP10：tophub 文章排行榜优先（2026-09-03 用户确认官方 launcher 热搜为往年旧词）→ 官方 launcher 兜底 → 60s API
-  let dcdHot, dcdSource;
-  if (tophubDcd.length >= 5) {
+  // 懂车帝 TOP10：登录态热搜快照（≤24h，唯一实时来源）→ tophub 文章排行榜 → 60s API
+  // 公开渠道说明：launcher 为 2023 僵尸缓存（已停用）、tophub /n/7GdaA8kdQy 冻结于 2026-06-30
+  let dcdHot, dcdSource, dcdBadge = '热榜';
+  const dcdSnap = readDcdSnapshot();
+  if (dcdSnap.length >= 5) {
+    dcdHot = dcdSnap;
+    dcdSource = '登录态热搜快照';
+    dcdBadge = '热搜';
+  } else if (tophubDcd.length >= 5) {
     dcdHot = normalizeTopHub(tophubDcd, 10);
     dcdSource = 'tophub 文章榜';
   } else {
-    // tophub 不可用时才请求官方 launcher 兜底
-    console.log('  tophub 懂车帝文章榜不可用，尝试官方 launcher...');
-    const dcdOfficial = await fetchDcdHotSearch();
-    if (dcdOfficial.length >= 5) {
-      dcdHot = dcdOfficial.slice(0, 10);
-      dcdSource = '官方 launcher';
-    } else {
-      console.log('  官方 launcher 亦不足，fallback 到 60s API...');
-      dcdHot = normalizeDcd(dcd, 10);
-      dcdSource = '60s API';
-    }
+    console.log('  tophub 懂车帝文章榜不可用，fallback 到 60s API...');
+    dcdHot = normalizeDcd(dcd, 10);
+    dcdSource = '60s API';
   }
-  console.log(`  懂车帝热榜: ${dcdHot.length} 条 (${dcdSource})`);
+  console.log(`  懂车帝: ${dcdHot.length} 条 (${dcdSource})`);
 
   // 微博汽车热榜：tophub 新浪汽车热搜为主，fallback 多源关键词 + 汽车之家补充
   let wbAuto, autoSource;
@@ -640,7 +669,7 @@ async function fetchAndGenerate() {
   const boards = [
     // 第一行
     { id: 'autohome-hot', logo: 'https://www.autohome.com.cn/favicon.ico', name: '汽车之家', badge: '热榜',     color: '#3b82f6', items: autohomeHot },
-    { id: 'dcd-hot',      logo: 'https://icon.horse/icon/www.dongchedi.com', name: '懂车帝',   badge: '热榜',     color: '#eab308', items: dcdHot },
+    { id: 'dcd-hot',      logo: 'https://icon.horse/icon/www.dongchedi.com', name: '懂车帝',   badge: dcdBadge,     color: '#eab308', items: dcdHot },
     { id: 'wb-auto',      logo: 'https://weibo.com/favicon.ico',           name: '新浪微博', badge: '汽车热榜', color: '#e17055', items: wbAuto },
     { id: 'tt-auto',      logo: 'https://www.toutiao.com/favicon.ico',     name: '今日头条', badge: '汽车热榜', color: '#F85959', items: ttAuto, hideHotNum: true },
     // 第二行
