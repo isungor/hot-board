@@ -107,6 +107,30 @@
     });
   }
 
+  // 懂车帝登录态热搜快照（同源 JSON，由本地登录态抓取脚本写入；超过 24h 视为过期）
+  function fetchDcdSnapshot() {
+    return fetch('dongchedi_hot.json?t=' + Date.now()).then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function(j) {
+      var items = (j && Array.isArray(j.items)) ? j.items : [];
+      var ts = Date.parse(j && j.captured_at);
+      if (!isFinite(ts) || (Date.now() - ts) / 3600000 > 24) return [];
+      var out = [];
+      for (var i = 0; i < items.length; i++) {
+        var it = items[i];
+        if (!it || !it.title) continue;
+        out.push({
+          rank: it.rank || out.length + 1,
+          title: it.title,
+          url: it.url || ('https://www.dongchedi.com/search?keyword=' + encodeURIComponent(it.title)),
+          hot: '', hot_num: 0
+        });
+      }
+      return out;
+    }).catch(function(e) { console.warn('fetchDcdSnapshot:', e); return []; });
+  }
+
   function fetchTopHub(node) {
     var url = TOPHUB + node;
     // 先尝试直连（同域或 CORS 允许时）
@@ -317,20 +341,18 @@
       fetchTopHub(TH_NODES.dcd),
       fetchTopHub(TH_NODES.ttAuto),
       fetchUapis('weibo'),
+      fetchDcdSnapshot(),
     ]).then(function(results) {
       var dcd = results[0], tt = results[1], dy = results[2], wb = results[3];
       var it = results[4], ah = results[5];
       var thEnt = results[6], thAuto = results[7], thDcd = results[8], thTtAuto = results[9];
-      var uapisWb = results[10];
-      // tophub 懂车帝文章榜不足 5 条时才请求官方 launcher（其内容为往年旧词，避免常态使用）
-      var launcherPromise = thDcd.length >= 5 ? Promise.resolve([]) : fetchDcdOfficial();
+      var uapisWb = results[10], dcdSnap = results[11];
 
-      return launcherPromise.then(function(dcdOfficial) {
-        var boards = [
+      var boards = [
         { id:'autohome-hot', logo:'https://www.autohome.com.cn/favicon.ico', name:'汽车之家', badge:'热榜', color:'#3b82f6', items: ah },
-        { id:'dcd-hot', logo:'https://icon.horse/icon/www.dongchedi.com', name:'懂车帝', badge:'热榜', color:'#eab308',
-          items: thDcd.length >= 5 ? thDcd.slice(0,10)
-                : (dcdOfficial.length >= 5 ? dcdOfficial.slice(0,10) : normDcd(dcd,10)) },
+        { id:'dcd-hot', logo:'https://icon.horse/icon/www.dongchedi.com', name:'懂车帝', badge: dcdSnap.length >= 5 ? '热搜' : '热榜', color:'#eab308',
+          items: dcdSnap.length >= 5 ? dcdSnap.slice(0,10)
+                : (thDcd.length >= 5 ? thDcd.slice(0,10) : normDcd(dcd,10)) },
         { id:'wb-auto', logo:'https://weibo.com/favicon.ico', name:'新浪微博', badge:'汽车热榜', color:'#e17055',
           items: thAuto.length >= 5 ? thAuto.slice(0,10) : multiFilter([
             {items:wb,norm:normGeneric},{items:tt,norm:normGeneric},{items:dy,norm:normGeneric},
@@ -352,9 +374,8 @@
           ], ENT_KW, 10) },
       ];
 
-        var boardsEl = document.querySelector('.boards');
-        if (boardsEl) boardsEl.innerHTML = boards.map(buildBoard).join('\n');
-      });
+      var boardsEl = document.querySelector('.boards');
+      if (boardsEl) boardsEl.innerHTML = boards.map(buildBoard).join('\n');
     }).catch(function(e) {
       console.error('刷新失败:', e);
     }).finally(function() {
